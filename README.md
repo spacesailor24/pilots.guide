@@ -1,1 +1,7 @@
-Hello world
+---
+icon: rocket-launch
+---
+
+# Welcome
+
+Hello World
