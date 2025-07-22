@@ -26,9 +26,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <Sidebar />
 
       {/* Main Content */}
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 flex flex-col min-h-0">
         {/* Top Bar */}
-        <header className="bg-zinc-900 px-6 py-3">
+        <header className="bg-zinc-900 px-6 py-3 flex-shrink-0">
           <div className="flex items-center justify-between">
             <nav className="text-sm text-gray-400">
               <Link
