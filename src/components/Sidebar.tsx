@@ -19,8 +19,9 @@ export default function Sidebar() {
       ],
     },
     {
-      section: "FLIGHT TRAINING",
+      section: "SHIP BUILDS",
       items: [
+        { name: "Overview", href: "/ship-builds", icon: "🚀" },
         {
           name: "Basic Flight Controls",
           href: "/basic-flight-controls",
