@@ -1,4 +1,5 @@
 import AppLayout from "@/components/AppLayout";
+import IframeDisplay from "@/components/IframeDisplay";
 
 export default function ShipSystemsPage() {
   return (
@@ -48,6 +49,57 @@ export default function ShipSystemsPage() {
                 </h3>
                 <p className="text-sm text-gray-400">
                   Prevents overheating of critical components during operation.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Ship Loadout Example */}
+        <IframeDisplay
+          src="https://www.erkul.games/loadout/KXHBgPy1"
+          title="Ship Loadout Example"
+          height="800px"
+          className="mb-6"
+        />
+
+        {/* Additional Systems Information */}
+        <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
+          <h2 className="text-xl font-semibold text-white mb-3">
+            Advanced Systems
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="bg-black/30 p-4 rounded-md">
+                <h3 className="font-medium text-red-400 mb-2">Quantum Drive</h3>
+                <p className="text-sm text-gray-400">
+                  Long-distance travel system for crossing vast interstellar
+                  distances.
+                </p>
+              </div>
+              <div className="bg-black/30 p-4 rounded-md">
+                <h3 className="font-medium text-red-400 mb-2">
+                  Weapon Systems
+                </h3>
+                <p className="text-sm text-gray-400">
+                  Offensive and defensive armaments for combat situations.
+                </p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="bg-black/30 p-4 rounded-md">
+                <h3 className="font-medium text-red-400 mb-2">Sensor Arrays</h3>
+                <p className="text-sm text-gray-400">
+                  Detection and scanning systems for navigation and threat
+                  assessment.
+                </p>
+              </div>
+              <div className="bg-black/30 p-4 rounded-md">
+                <h3 className="font-medium text-red-400 mb-2">
+                  Cargo Management
+                </h3>
+                <p className="text-sm text-gray-400">
+                  Storage and handling systems for goods and equipment.
                 </p>
               </div>
             </div>
