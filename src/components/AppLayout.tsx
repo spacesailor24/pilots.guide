@@ -11,7 +11,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const getPageTitle = () => {
     const pathMap: { [key: string]: string } = {
       "/welcome": "Welcome",
-      "/day-one-moving-the-pip": "Day One - Moving the Pip",
+      "/day-one/the-binary-circle": "Day One - The Binary Circle",
       "/ship-builds": "Ship Builds Overview",
       "/ship-builds/gladius-fighter": "Gladius Fighter Build",
       "/ship-builds/arrow-interceptor": "Arrow Interceptor Build",

@@ -10,32 +10,34 @@ export default function Sidebar() {
     {
       section: "SCHOLA VOLANDI",
       items: [
-        { name: "Welcome", href: "/welcome", icon: "🚀" },
+        { name: "Welcome", href: "/welcome" },
         {
-          name: "Day One - Moving the Pip",
-          href: "/day-one-moving-the-pip",
-          icon: "📚",
+          name: "Day One - The Binary Circle",
+          href: "/day-one/the-binary-circle",
+        },
+        {
+          name: "Day One - PIP Neutralization",
+          href: "/day-one/pip-neutralization",
         },
       ],
     },
     {
       section: "SHIP BUILDS",
       items: [
-        { name: "Overview", href: "/ship-builds", icon: "🚀" },
+        { name: "Overview", href: "/ship-builds" },
         {
           name: "Basic Flight Controls",
           href: "/basic-flight-controls",
-          icon: "✈️",
         },
-        { name: "Navigation Systems", href: "/navigation-systems", icon: "🎯" },
-        { name: "Ship Systems", href: "/ship-systems", icon: "⚙️" },
+        { name: "Navigation Systems", href: "/navigation-systems" },
+        { name: "Ship Systems", href: "/ship-systems" },
       ],
     },
     {
       section: "REFERENCE",
       items: [
-        { name: "Ship Database", href: "/ship-database", icon: "📖" },
-        { name: "Star Map", href: "/star-map", icon: "🌟" },
+        { name: "Ship Database", href: "/ship-database" },
+        { name: "Star Map", href: "/star-map" },
       ],
     },
   ];
