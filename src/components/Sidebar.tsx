@@ -86,7 +86,6 @@ export default function Sidebar() {
                             : "text-gray-300 hover:bg-red-900/10 hover:text-red-400"
                         }`}
                       >
-                        <span className="mr-2">{item.icon}</span>
                         {item.name}
                       </Link>
                     </li>
