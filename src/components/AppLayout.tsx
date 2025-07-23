@@ -30,7 +30,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen bg-black">
+    <div className="flex h-screen">
       <Sidebar />
 
       {/* Main Content */}

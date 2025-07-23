@@ -6,6 +6,7 @@ interface ShipBuild {
   id: string;
   name: string;
   ship: string;
+  buildName: string;
   description: string;
   erkulUrl: string;
   icon: string;
@@ -13,99 +14,124 @@ interface ShipBuild {
   difficulty: "Beginner" | "Intermediate" | "Advanced";
   imagePath?: string;
   maxCrew: number;
+  creator: string;
+  thumbsUp: number;
+  thumbsDown: number;
 }
 
-const shipBuilds: ShipBuild[] = [
+interface Ship {
+  id: string;
+  name: string;
+  category: string;
+  imagePath: string;
+  maxCrew: number;
+  bestBuild: {
+    buildName: string;
+    creator: string;
+    thumbsUp: number;
+    thumbsDown: number;
+    erkulUrl: string;
+  };
+}
+
+const ships: Ship[] = [
   {
-    id: "gladius-fighter",
-    name: "Gladius Fighter",
-    ship: "Gladius",
-    description:
-      "A versatile light fighter build optimized for dogfighting and escort missions.",
-    erkulUrl: "https://www.erkul.games/loadout/KXHBgPy1",
-    icon: "⚔️",
+    id: "gladius",
+    name: "Gladius",
     category: "Fighter",
-    difficulty: "Beginner",
     imagePath: "/images/gladius.png",
     maxCrew: 1,
+    bestBuild: {
+      buildName: "Meta Gladius",
+      creator: "AcePilot_42",
+      thumbsUp: 127,
+      thumbsDown: 3,
+      erkulUrl: "https://www.erkul.games/loadout/KXHBgPy1",
+    },
   },
   {
-    id: "arrow-interceptor",
-    name: "Arrow Interceptor",
-    ship: "Arrow",
-    description:
-      "High-speed interceptor build designed for hit-and-run tactics.",
-    erkulUrl: "https://www.erkul.games/loadout/example-arrow",
-    icon: "🏹",
+    id: "arrow",
+    name: "Arrow",
     category: "Fighter",
-    difficulty: "Intermediate",
     imagePath: "/images/arrow.png",
     maxCrew: 1,
+    bestBuild: {
+      buildName: "Speed Demon",
+      creator: "Interceptor_Pro",
+      thumbsUp: 89,
+      thumbsDown: 7,
+      erkulUrl: "https://www.erkul.games/loadout/example-arrow",
+    },
   },
   {
     id: "f8c-lightning",
     name: "F8C Lightning",
-    ship: "F8C Lightning",
-    description:
-      "Heavy fighter with exceptional firepower and durability for experienced pilots.",
-    erkulUrl: "https://www.erkul.games/loadout/example-f8c",
-    icon: "⚡",
     category: "Fighter",
-    difficulty: "Advanced",
     imagePath: "/images/f8c.png",
     maxCrew: 1,
+    bestBuild: {
+      buildName: "Thunder Strike",
+      creator: "Lightning_Strike",
+      thumbsUp: 203,
+      thumbsDown: 12,
+      erkulUrl: "https://www.erkul.games/loadout/example-f8c",
+    },
   },
   {
     id: "hornet-ghost",
-    name: "Hornet Ghost",
-    ship: "F7C-M Hornet Ghost",
-    description:
-      "Stealth-focused fighter with advanced electronic warfare capabilities.",
-    erkulUrl: "https://www.erkul.games/loadout/example-hornet-ghost",
-    icon: "👻",
+    name: "F7C-M Hornet Ghost",
     category: "Fighter",
-    difficulty: "Advanced",
     imagePath: "/images/hornet-mkii-ghost.png",
     maxCrew: 1,
+    bestBuild: {
+      buildName: "Stealth Hornet",
+      creator: "Ghost_Operator",
+      thumbsUp: 156,
+      thumbsDown: 8,
+      erkulUrl: "https://www.erkul.games/loadout/example-hornet-ghost",
+    },
   },
   {
     id: "hornet-super",
-    name: "Hornet Super",
-    ship: "F7C-M Hornet Super",
-    description:
-      "Heavy fighter variant with enhanced firepower and superior combat capabilities.",
-    erkulUrl: "https://www.erkul.games/loadout/example-hornet-super",
-    icon: "🦅",
+    name: "F7C-M Hornet Super",
     category: "Fighter",
-    difficulty: "Intermediate",
     imagePath: "/images/hornet-mkii-super.png",
     maxCrew: 1,
+    bestBuild: {
+      buildName: "Super Hornet Elite",
+      creator: "Super_Hornet_Ace",
+      thumbsUp: 134,
+      thumbsDown: 5,
+      erkulUrl: "https://www.erkul.games/loadout/example-hornet-super",
+    },
   },
   {
     id: "guardian-mx",
     name: "Guardian MX",
-    ship: "Guardian MX",
-    description:
-      "Multi-role fighter with balanced combat and utility capabilities.",
-    erkulUrl: "https://www.erkul.games/loadout/example-guardian-mx",
-    icon: "🛡️",
     category: "Multi-Role",
-    difficulty: "Intermediate",
     imagePath: "/images/guardian-mx.png",
     maxCrew: 1,
+    bestBuild: {
+      buildName: "Guardian Defender",
+      creator: "Guardian_Master",
+      thumbsUp: 98,
+      thumbsDown: 4,
+      erkulUrl: "https://www.erkul.games/loadout/example-guardian-mx",
+    },
   },
   {
     id: "guardian-qi",
     name: "Guardian QI",
-    ship: "Guardian QI",
-    description:
-      "Advanced multi-role fighter with quantum interference technology.",
-    erkulUrl: "https://www.erkul.games/loadout/example-guardian-qi",
-    icon: "🔮",
     category: "Multi-Role",
-    difficulty: "Advanced",
     imagePath: "/images/guardian-qi.png",
     maxCrew: 1,
+    bestBuild: {
+      buildName: "Quantum Guardian",
+      creator: "Quantum_Pilot",
+      thumbsUp: 178,
+      thumbsDown: 15,
+      erkulUrl: "https://www.erkul.games/loadout/example-guardian-qi",
+    },
   },
 ];
 
@@ -187,51 +213,47 @@ export default function ShipBuildsPage() {
             Available Builds
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {shipBuilds.map((build) => (
+            {ships.map((ship) => (
               <Link
-                key={build.id}
-                href={`/ship-builds/${build.id}`}
+                key={ship.id}
+                href={`/ship-builds/${ship.id}`}
                 className="group block"
               >
                 <div className="bg-zinc-900 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-200 group-hover:scale-105">
                   {/* Top Section - Ship Image */}
                   <div className="relative h-48 bg-gradient-to-br from-red-900/20 to-black">
-                    {build.imagePath ? (
+                    {ship.imagePath ? (
                       <Image
-                        src={build.imagePath}
-                        alt={build.name}
+                        src={ship.imagePath}
+                        alt={ship.name}
                         fill
                         className="object-cover"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <div className="text-6xl text-gray-600">
-                          {build.icon}
-                        </div>
+                        <div className="text-6xl text-gray-600">🚀</div>
                       </div>
                     )}
                   </div>
 
                   {/* Bottom Section - Ship Info */}
                   <div className="bg-gradient-to-r from-blue-900/80 to-teal-900/80 p-4">
+                    {/* Ship Name */}
+                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-red-400 transition-colors">
+                      {ship.name}
+                    </h3>
+
                     {/* Ship Type and Crew */}
-                    <div className="flex items-center text-white text-sm mb-2">
+                    <div className="flex items-center text-white text-sm">
                       <div className="flex items-center">
-                        <span className="mr-2">🚀</span>
-                        <span>{build.category}</span>
+                        <span>{ship.category}</span>
                       </div>
                       <span className="mx-2">/</span>
                       <div className="flex items-center">
-                        <span className="mr-2">👤</span>
-                        <span>Max crew: {build.maxCrew}</span>
+                        <span>Max crew: {ship.maxCrew}</span>
                       </div>
                     </div>
-
-                    {/* Ship Name */}
-                    <h3 className="text-xl font-bold text-white mb-3 group-hover:text-red-400 transition-colors">
-                      {build.ship}
-                    </h3>
                   </div>
                 </div>
               </Link>
