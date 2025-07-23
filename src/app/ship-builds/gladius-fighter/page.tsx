@@ -9,7 +9,7 @@ export default function GladiusFighterPage() {
         <div className="flex items-center mb-4">
           <span className="text-3xl mr-3">⚔️</span>
           <h1 className="text-3xl font-bold text-white">
-            Gladius Fighter Build
+            <>Gladius Fighter Build</>
           </h1>
         </div>
 
@@ -19,58 +19,80 @@ export default function GladiusFighterPage() {
             href="/ship-builds"
             className="hover:text-red-400 transition-colors"
           >
-            Ship Builds
+            <>Ship Builds</>
           </Link>
           <span className="mx-2">/</span>
-          <span className="text-white">Gladius Fighter</span>
+          <span className="text-white">
+            <>Gladius Fighter</>
+          </span>
         </nav>
 
         <p className="text-lg text-gray-300 leading-relaxed mb-6">
-          A versatile light fighter build optimized for dogfighting and escort
-          missions. This build focuses on agility and firepower while
-          maintaining good survivability.
+          <>
+            A versatile light fighter build optimized for dogfighting and escort
+            missions. This build focuses on agility and firepower while
+            maintaining good survivability.
+          </>
         </p>
 
         {/* Build Details */}
         <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg mb-6">
           <h2 className="text-xl font-semibold text-white mb-4">
-            Build Overview
+            <>Build Overview</>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-4">
               <div className="bg-black/30 p-4 rounded-md">
-                <h3 className="font-medium text-red-400 mb-2">Role</h3>
-                <p className="text-sm text-gray-400">Light Fighter / Escort</p>
-              </div>
-              <div className="bg-black/30 p-4 rounded-md">
-                <h3 className="font-medium text-red-400 mb-2">Difficulty</h3>
-                <p className="text-sm text-gray-400">Beginner Friendly</p>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div className="bg-black/30 p-4 rounded-md">
-                <h3 className="font-medium text-red-400 mb-2">Strengths</h3>
+                <h3 className="font-medium text-red-400 mb-2">
+                  <>Role</>
+                </h3>
                 <p className="text-sm text-gray-400">
-                  High agility, good firepower, cost-effective
+                  <>Light Fighter / Escort</>
                 </p>
               </div>
               <div className="bg-black/30 p-4 rounded-md">
-                <h3 className="font-medium text-red-400 mb-2">Weaknesses</h3>
+                <h3 className="font-medium text-red-400 mb-2">
+                  <>Difficulty</>
+                </h3>
                 <p className="text-sm text-gray-400">
-                  Limited cargo, low armor
+                  <>Beginner Friendly</>
                 </p>
               </div>
             </div>
             <div className="space-y-4">
               <div className="bg-black/30 p-4 rounded-md">
-                <h3 className="font-medium text-red-400 mb-2">Best For</h3>
+                <h3 className="font-medium text-red-400 mb-2">
+                  <>Strengths</>
+                </h3>
                 <p className="text-sm text-gray-400">
-                  Dogfighting, escort missions, bounty hunting
+                  <>High agility, good firepower, cost-effective</>
                 </p>
               </div>
               <div className="bg-black/30 p-4 rounded-md">
-                <h3 className="font-medium text-red-400 mb-2">Price Range</h3>
-                <p className="text-sm text-gray-400">Affordable to mid-range</p>
+                <h3 className="font-medium text-red-400 mb-2">
+                  <>Weaknesses</>
+                </h3>
+                <p className="text-sm text-gray-400">
+                  <>Limited cargo, low armor</>
+                </p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="bg-black/30 p-4 rounded-md">
+                <h3 className="font-medium text-red-400 mb-2">
+                  <>Best For</>
+                </h3>
+                <p className="text-sm text-gray-400">
+                  <>Dogfighting, escort missions, bounty hunting</>
+                </p>
+              </div>
+              <div className="bg-black/30 p-4 rounded-md">
+                <h3 className="font-medium text-red-400 mb-2">
+                  <>Price Range</>
+                </h3>
+                <p className="text-sm text-gray-400">
+                  <>Affordable to mid-range</>
+                </p>
               </div>
             </div>
           </div>
@@ -87,46 +109,54 @@ export default function GladiusFighterPage() {
         {/* Build Strategy */}
         <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg mb-6">
           <h2 className="text-xl font-semibold text-white mb-4">
-            Combat Strategy
+            <>Combat Strategy</>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="bg-black/30 p-4 rounded-md">
                 <h3 className="font-medium text-red-400 mb-2">
-                  Engagement Tactics
+                  <>Engagement Tactics</>
                 </h3>
                 <p className="text-sm text-gray-400">
-                  Use your superior agility to outmaneuver larger ships. Stay
-                  mobile and avoid head-on confrontations with heavy fighters.
+                  <>
+                    Use your superior agility to outmaneuver larger ships. Stay
+                    mobile and avoid head-on confrontations with heavy fighters.
+                  </>
                 </p>
               </div>
               <div className="bg-black/30 p-4 rounded-md">
                 <h3 className="font-medium text-red-400 mb-2">
-                  Weapon Management
+                  <>Weapon Management</>
                 </h3>
                 <p className="text-sm text-gray-400">
-                  Focus on precision shots rather than sustained fire. Use your
-                  weapons efficiently to maximize damage output.
+                  <>
+                    Focus on precision shots rather than sustained fire. Use
+                    your weapons efficiently to maximize damage output.
+                  </>
                 </p>
               </div>
             </div>
             <div className="space-y-4">
               <div className="bg-black/30 p-4 rounded-md">
                 <h3 className="font-medium text-red-400 mb-2">
-                  Defensive Maneuvers
+                  <>Defensive Maneuvers</>
                 </h3>
                 <p className="text-sm text-gray-400">
-                  Keep your shields up and use evasive maneuvers when under
-                  heavy fire. Don't be afraid to disengage if outnumbered.
+                  <>
+                    Keep your shields up and use evasive maneuvers when under
+                    heavy fire. Don't be afraid to disengage if outnumbered.
+                  </>
                 </p>
               </div>
               <div className="bg-black/30 p-4 rounded-md">
                 <h3 className="font-medium text-red-400 mb-2">
-                  Team Coordination
+                  <>Team Coordination</>
                 </h3>
                 <p className="text-sm text-gray-400">
-                  Work with wingmen to focus fire on priority targets. Use your
-                  speed to provide support where needed.
+                  <>
+                    Work with wingmen to focus fire on priority targets. Use
+                    your speed to provide support where needed.
+                  </>
                 </p>
               </div>
             </div>
@@ -136,27 +166,31 @@ export default function GladiusFighterPage() {
         {/* Recommended Upgrades */}
         <div className="bg-gradient-to-r from-red-900/20 to-red-800/20 rounded-lg border border-red-600 p-6">
           <h2 className="text-xl font-semibold text-white mb-4">
-            Recommended Upgrades
+            <>Recommended Upgrades</>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
               <h3 className="font-medium text-red-400">
-                Priority 1 (Essential)
+                <>Priority 1 (Essential)</>
               </h3>
               <ul className="space-y-2 text-sm text-gray-300">
-                <li>• Military-grade shields for better survivability</li>
-                <li>• High-quality power plant for weapon efficiency</li>
-                <li>• Improved cooling systems</li>
+                <>
+                  <li>• Military-grade shields for better survivability</li>
+                  <li>• High-quality power plant for weapon efficiency</li>
+                  <li>• Improved cooling systems</li>
+                </>
               </ul>
             </div>
             <div className="space-y-3">
               <h3 className="font-medium text-red-400">
-                Priority 2 (Recommended)
+                <>Priority 2 (Recommended)</>
               </h3>
               <ul className="space-y-2 text-sm text-gray-300">
-                <li>• Enhanced targeting systems</li>
-                <li>• Better quantum drive for faster travel</li>
-                <li>• Advanced missile racks</li>
+                <>
+                  <li>• Enhanced targeting systems</li>
+                  <li>• Better quantum drive for faster travel</li>
+                  <li>• Advanced missile racks</li>
+                </>
               </ul>
             </div>
           </div>
@@ -182,13 +216,13 @@ export default function GladiusFighterPage() {
                   d="M15 19l-7-7 7-7"
                 />
               </svg>
-              Back to Builds
+              <>Back to Builds</>
             </Link>
             <Link
               href="/ship-builds/arrow-interceptor"
               className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors"
             >
-              Next Build
+              <>Next Build</>
               <svg
                 className="w-4 h-4 ml-2"
                 fill="none"

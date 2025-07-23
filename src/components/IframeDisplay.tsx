@@ -16,10 +16,7 @@ export default function IframeDisplay({
   className = "",
 }: IframeDisplayProps) {
   return (
-    <div
-      className={`bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg ${className}`}
-    >
-      <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>
+    <div>
       <div className="relative w-full overflow-hidden rounded-md border border-red-600/30">
         <iframe
           src={src}

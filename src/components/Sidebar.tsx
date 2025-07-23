@@ -27,22 +27,7 @@ export default function Sidebar() {
     },
     {
       section: "SHIP BUILDS",
-      items: [
-        { name: "Overview", href: "/ship-builds" },
-        {
-          name: "Basic Flight Controls",
-          href: "/basic-flight-controls",
-        },
-        { name: "Navigation Systems", href: "/navigation-systems" },
-        { name: "Ship Systems", href: "/ship-systems" },
-      ],
-    },
-    {
-      section: "REFERENCE",
-      items: [
-        { name: "Ship Database", href: "/ship-database" },
-        { name: "Star Map", href: "/star-map" },
-      ],
+      items: [{ name: "Overview", href: "/ship-builds" }],
     },
   ];
 

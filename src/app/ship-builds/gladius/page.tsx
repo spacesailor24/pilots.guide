@@ -90,7 +90,9 @@ export default function GladiusPage() {
       <div className="mb-8">
         <div className="flex items-center mb-4">
           <span className="text-3xl mr-3">⚔️</span>
-          <h1 className="text-3xl font-bold text-white">Gladius Builds</h1>
+          <h1 className="text-3xl font-bold text-white">
+            <>Gladius Builds</>
+          </h1>
         </div>
 
         {/* Breadcrumb */}
@@ -99,10 +101,12 @@ export default function GladiusPage() {
             href="/ship-builds"
             className="hover:text-red-400 transition-colors"
           >
-            Ship Builds
+            <>Ship Builds</>
           </Link>
           <span className="mx-2">/</span>
-          <span className="text-white">Gladius</span>
+          <span className="text-white">
+            <>Gladius</>
+          </span>
         </nav>
 
         {/* Ship Overview */}
@@ -117,24 +121,40 @@ export default function GladiusPage() {
               />
             </div>
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-white mb-2">Gladius</h2>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                <>Gladius</>
+              </h2>
               <p className="text-gray-300 mb-4">
-                A versatile light fighter known for its agility and balanced
-                performance. Perfect for new pilots and experienced dogfighters
-                alike.
+                <>
+                  A versatile light fighter known for its agility and balanced
+                  performance. Perfect for new pilots and experienced
+                  dogfighters alike.
+                </>
               </p>
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-400">Category:</span>
-                  <span className="text-white ml-2">Fighter</span>
+                  <span className="text-gray-400">
+                    <>Category:</>
+                  </span>
+                  <span className="text-white ml-2">
+                    <>Fighter</>
+                  </span>
                 </div>
                 <div>
-                  <span className="text-gray-400">Max Crew:</span>
-                  <span className="text-white ml-2">1</span>
+                  <span className="text-gray-400">
+                    <>Max Crew:</>
+                  </span>
+                  <span className="text-white ml-2">
+                    <>1</>
+                  </span>
                 </div>
                 <div>
-                  <span className="text-gray-400">Difficulty:</span>
-                  <span className="text-white ml-2">Beginner</span>
+                  <span className="text-gray-400">
+                    <>Difficulty:</>
+                  </span>
+                  <span className="text-white ml-2">
+                    <>Beginner</>
+                  </span>
                 </div>
               </div>
             </div>
@@ -145,7 +165,7 @@ export default function GladiusPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-white">
-              Top Rated Build
+              <>Top Rated Build</>
             </h2>
             <div className="flex items-center space-x-2">
               <span className="text-green-400">👍 {topBuild.thumbsUp}</span>
@@ -161,7 +181,9 @@ export default function GladiusPage() {
                 </h3>
                 <p className="text-gray-300 mb-2">{topBuild.description}</p>
                 <div className="flex items-center space-x-4 text-sm">
-                  <span className="text-gray-400">by {topBuild.creator}</span>
+                  <span className="text-gray-400">
+                    <>by {topBuild.creator}</>
+                  </span>
                   <div
                     className={`px-2 py-1 rounded-full text-xs font-medium border ${getDifficultyColor(
                       topBuild.difficulty
@@ -186,7 +208,7 @@ export default function GladiusPage() {
         {/* Other Builds Carousel */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-white mb-4">
-            Other Builds
+            <>Other Builds</>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {otherBuilds.map((build) => (
@@ -212,7 +234,9 @@ export default function GladiusPage() {
                 </p>
 
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-400">by {build.creator}</span>
+                  <span className="text-gray-400">
+                    <>by {build.creator}</>
+                  </span>
                   <div className="flex items-center space-x-2">
                     <span className="text-green-400">👍 {build.thumbsUp}</span>
                     <span className="text-red-400">👎 {build.thumbsDown}</span>
@@ -220,7 +244,7 @@ export default function GladiusPage() {
                 </div>
 
                 <button className="w-full mt-3 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors">
-                  View Build
+                  <>View Build</>
                 </button>
               </div>
             ))}
@@ -247,13 +271,13 @@ export default function GladiusPage() {
                   d="M15 19l-7-7 7-7"
                 />
               </svg>
-              Back to Ships
+              <>Back to Ships</>
             </Link>
             <Link
               href="/ship-builds/arrow"
               className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors"
             >
-              Next Ship
+              <>Next Ship</>
               <svg
                 className="w-4 h-4 ml-2"
                 fill="none"
