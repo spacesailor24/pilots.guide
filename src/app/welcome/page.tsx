@@ -114,6 +114,18 @@ export default function WelcomePage() {
                   </p>
                 </div>
               </Link>
+              <Link href="/day-one/pip-deflection" className="group">
+                <div className="bg-zinc-800 p-3 rounded hover:bg-zinc-700 transition-colors border border-zinc-700 group-hover:border-red-600">
+                  <h4 className="text-white font-medium text-sm mb-1">
+                    PIP Deflection
+                  </h4>
+                  <p className="text-xs text-gray-400">
+                    Deflect incoming projectiles by neutralizing and then
+                    applying a strong strafe input in the direction of the
+                    projectile's trajectory
+                  </p>
+                </div>
+              </Link>
             </div>
           </div>
         </div>

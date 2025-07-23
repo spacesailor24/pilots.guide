@@ -19,6 +19,10 @@ export default function Sidebar() {
           name: "Day One - PIP Neutralization",
           href: "/day-one/pip-neutralization",
         },
+        {
+          name: "Day One - PIP Deflection",
+          href: "/day-one/pip-deflection",
+        },
       ],
     },
     {
