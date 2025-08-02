@@ -5,26 +5,11 @@ export default function PipDeflectionPage() {
   return (
     <AppLayout>
       <div className="mb-8">
-        <div className="flex items-center mb-4">
-          <span className="text-3xl mr-3">↗️</span>
-          <h1 className="text-3xl font-bold text-white">
-            <>Day One: PIP Deflection</>
-          </h1>
-        </div>
-        <p className="text-lg text-gray-300 leading-relaxed mb-6">
-          <>
-            Master the defensive art of PIP deflection to become unpredictable
-            and harder to hit. This advanced technique shifts your momentum in
-            directions not parallel to your current trajectory, creating evasive
-            patterns that throw off enemy aim.
-          </>
-        </p>
-
         {/* PIP Deflection Overview */}
         <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg mb-6">
-          <h2 className="text-xl font-semibold text-white mb-3">
-            <>Understanding PIP Deflection</>
-          </h2>
+          <h1 className="text-4xl font-semibold text-white mb-3">
+            <>PIP Deflection</>
+          </h1>
           <p className="text-gray-300 mb-4">
             <>
               PIP deflection is a defensive-oriented technique that shifts your
@@ -39,7 +24,7 @@ export default function PipDeflectionPage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Defensive Tool</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
                   Primarily used to avoid incoming fire by creating
                   unpredictable movement patterns that disrupt enemy aim
@@ -51,7 +36,7 @@ export default function PipDeflectionPage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Momentum Shift</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
                   Changes your inertia direction without following your nose,
                   making your flight path harder to anticipate.
@@ -71,14 +56,14 @@ export default function PipDeflectionPage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Step 1: Neutralize First</>
               </h3>
-              <p className="text-sm text-gray-400 mb-2">
+              <p className="text-md text-gray-400 mb-2">
                 <>
                   Always neutralize the PIP before attempting deflection. The
                   closer to neutral, the more effective your deflection will be.
                 </>
               </p>
               <div className="bg-yellow-900/20 border border-yellow-600 p-3 rounded mt-2">
-                <p className="text-xs text-yellow-300">
+                <p className="text-sm text-yellow-300">
                   <>
                     <strong>Warning:</strong> If you don't neutralize first,
                     your PIP will only gradually move towards your new
@@ -92,7 +77,7 @@ export default function PipDeflectionPage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Step 2: Roll for Optimal Strafe</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
                   Roll your ship to align your stronger strafe rates with the
                   direction you want to deflect. Most ships have stronger
@@ -105,7 +90,7 @@ export default function PipDeflectionPage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Step 3: Apply Strafe Input</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
                   Apply strong strafe in your chosen direction to shift your
                   momentum vector away from your current trajectory.
@@ -133,7 +118,7 @@ export default function PipDeflectionPage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Effective Scenarios</>
               </h3>
-              <ul className="text-sm text-gray-400 space-y-2">
+              <ul className="text-md text-gray-400 space-y-2">
                 <>
                   <li>• Long-range engagements (easier to dodge)</li>
                   <li>• Knife fighting (quick direction changes)</li>
@@ -146,13 +131,13 @@ export default function PipDeflectionPage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Speed Wall Consideration</>
               </h3>
-              <p className="text-sm text-gray-400 mb-2">
+              <p className="text-md text-gray-400 mb-2">
                 <>
                   The closer you are to the speed wall, the more prominent the
                   deflection effect becomes.
                 </>
               </p>
-              <ul className="text-xs text-gray-500 space-y-1">
+              <ul className="text-sm text-gray-500 space-y-1">
                 <>
                   <li>• High speed = stronger deflection</li>
                   <li>• Low speed = weaker deflection</li>
@@ -162,7 +147,7 @@ export default function PipDeflectionPage() {
             </div>
           </div>
           <div className="bg-red-900/20 border border-red-700 p-4 rounded-md mt-4">
-            <p className="text-sm text-red-300">
+            <p className="text-md text-red-300">
               <>
                 <strong>Critical:</strong> Use deflection sparingly! Constant
                 deflecting won't prevent the majority of damage and will throw
@@ -182,10 +167,10 @@ export default function PipDeflectionPage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Drill 1: Basic Deflection Timing</>
               </h3>
-              <p className="text-sm text-gray-400 mb-2">
+              <p className="text-md text-gray-400 mb-2">
                 <>Practice the neutralize-deflect sequence:</>
               </p>
-              <ul className="text-xs text-gray-500 space-y-1">
+              <ul className="text-sm text-gray-500 space-y-1">
                 <>
                   <li>• Fly at various speeds and practice neutralizing</li>
                   <li>
@@ -203,10 +188,10 @@ export default function PipDeflectionPage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Drill 2: Combat Deflection</>
               </h3>
-              <p className="text-sm text-gray-400 mb-2">
+              <p className="text-md text-gray-400 mb-2">
                 <>Apply deflection under fire:</>
               </p>
-              <ul className="text-xs text-gray-500 space-y-1">
+              <ul className="text-sm text-gray-500 space-y-1">
                 <>
                   <li>• Engage a practice partner at medium range</li>
                   <li>• When they achieve good aim, neutralize and deflect</li>
@@ -219,10 +204,10 @@ export default function PipDeflectionPage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Drill 3: Combined Techniques</>
               </h3>
-              <p className="text-sm text-gray-400 mb-2">
+              <p className="text-md text-gray-400 mb-2">
                 <>Mix deflection with other PIP techniques:</>
               </p>
-              <ul className="text-xs text-gray-500 space-y-1">
+              <ul className="text-sm text-gray-500 space-y-1">
                 <>
                   <li>
                     • Alternate between neutralization, extension, and
@@ -251,7 +236,7 @@ export default function PipDeflectionPage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>❌ Deflecting without neutralizing</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
                   Skipping neutralization makes your deflection gradual and
                   predictable, defeating the purpose of the technique.
@@ -262,7 +247,7 @@ export default function PipDeflectionPage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>❌ Constant deflection</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
                   Over-using deflection makes you erratic but not necessarily
                   harder to hit. Use it strategically, not constantly.
@@ -273,7 +258,7 @@ export default function PipDeflectionPage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>❌ Ignoring your own aim</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
                   Don't sacrifice all offensive capability for defense. The best
                   pilots deflect while maintaining firing solutions.
@@ -284,10 +269,11 @@ export default function PipDeflectionPage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>❌ Poor roll management</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
-                  Not rolling to optimize strafe rates reduces deflection
-                  effectiveness. Know your ship's strafe strengths.
+                  Failing to roll and align your ship for optimal strafe
+                  direction limits the effectiveness of your deflection.
+                  Understand and utilize your ship's strongest strafe axes.
                 </>
               </p>
             </div>
@@ -295,14 +281,14 @@ export default function PipDeflectionPage() {
         </div>
 
         {/* Advanced Tips */}
-        <div className="bg-gradient-to-r from-red-900/20 to-red-800/20 rounded-lg border border-red-600 p-6 mt-6">
+        <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg mt-6">
           <h2 className="text-xl font-semibold text-white mb-3">
-            <>Pro Tips</>
+            <>Combat Tips</>
           </h2>
           <div className="space-y-3">
             <div className="flex items-start">
               <div className="flex-shrink-0 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                <span className="text-white text-xs font-bold">1</span>
+                <span className="text-white text-sm font-bold">1</span>
               </div>
               <p className="text-gray-300">
                 <>
@@ -314,7 +300,7 @@ export default function PipDeflectionPage() {
             </div>
             <div className="flex items-start">
               <div className="flex-shrink-0 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                <span className="text-white text-xs font-bold">2</span>
+                <span className="text-white text-sm font-bold">2</span>
               </div>
               <p className="text-gray-300">
                 <>
@@ -326,7 +312,7 @@ export default function PipDeflectionPage() {
             </div>
             <div className="flex items-start">
               <div className="flex-shrink-0 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                <span className="text-white text-xs font-bold">3</span>
+                <span className="text-white text-sm font-bold">3</span>
               </div>
               <p className="text-gray-300">
                 <>
@@ -338,7 +324,7 @@ export default function PipDeflectionPage() {
             </div>
             <div className="flex items-start">
               <div className="flex-shrink-0 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                <span className="text-white text-xs font-bold">4</span>
+                <span className="text-white text-sm font-bold">4</span>
               </div>
               <p className="text-gray-300">
                 <>

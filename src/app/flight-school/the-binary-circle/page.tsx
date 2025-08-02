@@ -5,26 +5,11 @@ export default function DayOnePage() {
   return (
     <AppLayout>
       <div className="mb-8">
-        <div className="flex items-center mb-4">
-          <span className="text-3xl mr-3">⚔️</span>
-          <h1 className="text-3xl font-bold text-white">
-            <>How To Beat Most Players in Master Modes</>
-          </h1>
-        </div>
-        <p className="text-lg text-gray-300 leading-relaxed mb-6">
-          <>
-            Master the Binary Circle technique - the current meta for dominating
-            in Star Citizen's Master Modes combat system. This advanced combat
-            guide will teach you how to win micro-battles and control
-            engagements.
-          </>
-        </p>
-
         {/* The Binary Circle Overview */}
         <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg mb-6">
-          <h2 className="text-xl font-semibold text-white mb-3">
-            <>The Binary Circle Technique</>
-          </h2>
+          <h1 className="text-4xl font-semibold text-white mb-3">
+            <>The Binary Circle</>
+          </h1>
           <p className="text-gray-300 mb-4">
             <>
               The Binary Circle is the foundation of Master Modes combat. Unlike
@@ -36,21 +21,27 @@ export default function DayOnePage() {
             <h3 className="font-medium text-red-400 mb-2">
               <>Core Movement Pattern</>
             </h3>
-            <ul className="text-sm text-gray-400 space-y-2">
-              <>
-                <li>• Forward input at 50% throttle (constant)</li>
-                <li>• Down strafe at 25% input (primary maneuver)</li>
-                <li>• Modulate up/down strafe to control distance</li>
-                <li>• Minimal side strafe - only for micro-dodges</li>
-              </>
-            </ul>
+            <div className="flex flex-col md:flex-row gap-8">
+              <ul className="text-md text-gray-400 space-y-2 flex-1">
+                <>
+                  <li>• Forward input at 50% throttle (modulate as needed)</li>
+                  <li>• Down strafe at 25% input</li>
+                </>
+              </ul>
+              <ul className="text-md text-gray-400 space-y-2 flex-1">
+                <>
+                  <li>• Modulate up/down strafe to control distance</li>
+                  <li>• Minimal side strafe - only for micro-dodges</li>
+                </>
+              </ul>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-black/30 p-4 rounded-md">
               <h3 className="font-medium text-red-400 mb-2">
                 <>Why It Works</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
                   Master Modes punishes aggressive pushing. The Binary Circle
                   keeps you in the optimal 300m engagement range while
@@ -62,7 +53,7 @@ export default function DayOnePage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Key Principle</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
                   Keep your pip centered on the enemy ship. Always return to
                   center after any dodge - this is your neutral position.
@@ -90,10 +81,10 @@ export default function DayOnePage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Advantage vs Disadvantage</>
               </h3>
-              <p className="text-sm text-gray-400 mb-2">
+              <p className="text-md text-gray-400 mb-2">
                 <>Recognize positioning immediately:</>
               </p>
-              <ul className="text-xs text-gray-500 space-y-1">
+              <ul className="text-sm text-gray-500 space-y-1">
                 <>
                   <li>• Neutral: Both ships facing away</li>
                   <li>• Advantage: Your nose on target first</li>
@@ -105,10 +96,10 @@ export default function DayOnePage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>When to Fight vs Dodge</>
               </h3>
-              <p className="text-sm text-gray-400 mb-2">
+              <p className="text-md text-gray-400 mb-2">
                 <>Make split-second decisions:</>
               </p>
-              <ul className="text-xs text-gray-500 space-y-1">
+              <ul className="text-sm text-gray-500 space-y-1">
                 <>
                   <li>• Equal position → Focus on DPS</li>
                   <li>• Advantage → Push and maintain</li>
@@ -120,7 +111,7 @@ export default function DayOnePage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Speed Wall Management</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
                   Don't fight the speed wall - it will punish you. At 300m,
                   focus purely on applying damage rather than maneuvering.
@@ -131,7 +122,7 @@ export default function DayOnePage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Roll is Your Enemy</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
                   Rolling pushes your pip away from target. Stay flat and use
                   strafe inputs only - no roll matching needed.
@@ -151,10 +142,10 @@ export default function DayOnePage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Stage 1: Binary Circle Basics</>
               </h3>
-              <p className="text-sm text-gray-400 mb-2">
+              <p className="text-md text-gray-400 mb-2">
                 <>Practice against AI or less skilled opponents:</>
               </p>
-              <ul className="text-xs text-gray-500 space-y-1">
+              <ul className="text-sm text-gray-500 space-y-1">
                 <>
                   <li>• Maintain forward + down strafe constantly</li>
                   <li>• Keep pip centered without rolling</li>
@@ -166,10 +157,10 @@ export default function DayOnePage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Stage 2: Micro-Dodging</>
               </h3>
-              <p className="text-sm text-gray-400 mb-2">
+              <p className="text-md text-gray-400 mb-2">
                 <>Add defensive elements:</>
               </p>
-              <ul className="text-xs text-gray-500 space-y-1">
+              <ul className="text-sm text-gray-500 space-y-1">
                 <>
                   <li>• Quick left/right taps (quarter input only)</li>
                   <li>• Immediately return to center</li>
@@ -181,10 +172,10 @@ export default function DayOnePage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>Stage 3: Transition Mastery</>
               </h3>
-              <p className="text-sm text-gray-400 mb-2">
+              <p className="text-md text-gray-400 mb-2">
                 <>Handle merges and resets:</>
               </p>
-              <ul className="text-xs text-gray-500 space-y-1">
+              <ul className="text-sm text-gray-500 space-y-1">
                 <>
                   <li>• Down strafe + reverse on merge</li>
                   <li>• Immediate forward input after nose acquisition</li>
@@ -208,7 +199,7 @@ export default function DayOnePage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>❌ Over-strafing</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
                   Holding strafe inputs too long breaks your positioning. Use
                   quick taps and return to center.
@@ -219,7 +210,7 @@ export default function DayOnePage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>❌ Fighting the speed wall</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
                   Trying to maneuver at 300m is futile. Accept the DPS trade and
                   focus on accuracy.
@@ -230,7 +221,7 @@ export default function DayOnePage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>❌ Up-strafing on merge</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
                   Up strafe cannot match opponent's back strafe. Always down
                   strafe + reverse on merge.
@@ -241,7 +232,7 @@ export default function DayOnePage() {
               <h3 className="font-medium text-red-400 mb-2">
                 <>❌ Roll matching</>
               </h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-md text-gray-400">
                 <>
                   Rolling disrupts your aim. Stay flat and let strafe inputs
                   handle positioning.
@@ -252,14 +243,14 @@ export default function DayOnePage() {
         </div>
 
         {/* Advanced Tips */}
-        <div className="bg-gradient-to-r from-red-900/20 to-red-800/20 rounded-lg border border-red-600 p-6 mt-6">
+        <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg mt-6">
           <h2 className="text-xl font-semibold text-white mb-3">
-            <>Advanced Combat Tips</>
+            <>Combat Tips</>
           </h2>
           <div className="space-y-3">
             <div className="flex items-start">
               <div className="flex-shrink-0 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                <span className="text-white text-xs font-bold">1</span>
+                <span className="text-white text-sm font-bold">1</span>
               </div>
               <p className="text-gray-300">
                 <>
@@ -271,7 +262,7 @@ export default function DayOnePage() {
             </div>
             <div className="flex items-start">
               <div className="flex-shrink-0 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                <span className="text-white text-xs font-bold">2</span>
+                <span className="text-white text-sm font-bold">2</span>
               </div>
               <p className="text-gray-300">
                 <>
@@ -283,7 +274,7 @@ export default function DayOnePage() {
             </div>
             <div className="flex items-start">
               <div className="flex-shrink-0 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                <span className="text-white text-xs font-bold">3</span>
+                <span className="text-white text-sm font-bold">3</span>
               </div>
               <p className="text-gray-300">
                 <>
@@ -295,7 +286,7 @@ export default function DayOnePage() {
             </div>
             <div className="flex items-start">
               <div className="flex-shrink-0 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                <span className="text-white text-xs font-bold">4</span>
+                <span className="text-white text-sm font-bold">4</span>
               </div>
               <p className="text-gray-300">
                 <>
