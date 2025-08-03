@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
 import UserMenu from "./UserMenu";
+import { useShips } from "@/contexts/ShipsContext";
+import LinkWithTransition from "./LinkWithTransition";
 
 export default function HamburgerMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { shipsWithBuilds } = useShips();
 
   const navigation = [
     {
@@ -33,7 +33,11 @@ export default function HamburgerMenu() {
       section: "SHIP BUILDS",
       items: [
         { name: "Overview", href: "/ship-builds" },
-        ...(session ? [{ name: "Submit Build", href: "/submit-build" }] : []),
+        { name: "Submit Build", href: "/submit-build" },
+        ...shipsWithBuilds.map((ship) => ({
+          name: ship.name,
+          href: `/ship-builds/${ship.shipId}`,
+        })),
       ],
     },
   ];
@@ -80,7 +84,9 @@ export default function HamburgerMenu() {
         <div className="flex flex-col h-full">
           {/* Logo/Brand */}
           <div className="p-4 mt-16">
-            <h1 className="text-lg font-semibold text-red-500">pilots.guide</h1>
+            <h1 className="text-lg font-semibold text-red-500">
+              <LinkWithTransition href="/welcome">pilots.guide</LinkWithTransition>
+            </h1>
             <p className="text-sm text-gray-400">
               The Pilot's Guide to the 'Verse
             </p>
@@ -99,7 +105,7 @@ export default function HamburgerMenu() {
                       const isActive = pathname === item.href;
                       return (
                         <li key={item.href}>
-                          <Link
+                          <LinkWithTransition
                             href={item.href}
                             onClick={() => setIsOpen(false)}
                             className={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
@@ -109,7 +115,7 @@ export default function HamburgerMenu() {
                             }`}
                           >
                             {item.name}
-                          </Link>
+                          </LinkWithTransition>
                         </li>
                       );
                     })}
