@@ -239,6 +239,36 @@ const builds = [
 async function main() {
   console.log("🌱 Seeding database...");
 
+  // Create permissions
+  const adminPermission = await prisma.permission.upsert({
+    where: { name: "ADMIN" },
+    update: {},
+    create: {
+      name: "ADMIN",
+      description: "Allows access to admin features",
+    },
+  });
+  console.log("✅ Created permission: ADMIN");
+
+  // Create spacesai1or user with admin permission
+  const spacesailorUser = await prisma.user.create({
+    data: {
+      username: "spacesai1or",
+      image: null,
+    },
+  });
+  console.log("✅ Created user: spacesai1or");
+
+  // Grant admin permission to spacesai1or
+  await prisma.userPermission.create({
+    data: {
+      userId: spacesailorUser.id,
+      permissionId: adminPermission.id,
+      grantedBy: "system",
+    },
+  });
+  console.log("✅ Granted ADMIN permission to spacesai1or");
+
   // Create categories
   for (const category of categories) {
     await prisma.category.upsert({

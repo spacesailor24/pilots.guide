@@ -42,14 +42,13 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  builds        Build[]
+  id               String           @id @default(cuid())
+  username         String?          @unique
+  image            String?
+  accounts         Account[]
+  sessions         Session[]
+  builds           Build[]
+  permissions      UserPermission[]
 }
 
 model VerificationToken {
@@ -116,4 +115,28 @@ model Build {
   @@index([userId])
   @@index([categoryId])
   @@index([patchId])
+}
+
+// Permissions system
+model Permission {
+  id          String           @id @default(cuid())
+  name        String           @unique // e.g., "MATCHMAKING_VIEW", "ADMIN", "MODERATOR"
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  users       UserPermission[]
+}
+
+model UserPermission {
+  id           String     @id @default(cuid())
+  userId       String
+  permissionId String
+  grantedAt    DateTime   @default(now())
+  grantedBy    String?    // Optional: track who granted the permission
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permissionId])
+  @@index([userId])
+  @@index([permissionId])
 }
