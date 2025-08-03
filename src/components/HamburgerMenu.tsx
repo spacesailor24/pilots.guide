@@ -3,10 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
+import UserMenu from "./UserMenu";
 
 export default function HamburgerMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const navigation = [
     {
@@ -28,7 +31,10 @@ export default function HamburgerMenu() {
     },
     {
       section: "SHIP BUILDS",
-      items: [{ name: "Overview", href: "/ship-builds" }],
+      items: [
+        { name: "Overview", href: "/ship-builds" },
+        ...(session ? [{ name: "Submit Build", href: "/submit-build" }] : []),
+      ],
     },
   ];
 
@@ -37,7 +43,7 @@ export default function HamburgerMenu() {
       {/* Hamburger button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-50 p-2 rounded-md bg-zinc-900 border border-red-600/30 text-red-400 lg:hidden"
+        className="fixed top-5 left-4 z-50 p-2 rounded-md bg-zinc-900 border border-red-600/30 text-red-400 lg:hidden"
         aria-label="Toggle menu"
       >
         <svg
@@ -112,6 +118,11 @@ export default function HamburgerMenu() {
               ))}
             </div>
           </nav>
+
+          {/* User Menu at bottom of mobile menu */}
+          <div className="p-4 border-t border-zinc-800">
+            <UserMenu />
+          </div>
         </div>
       </div>
     </>

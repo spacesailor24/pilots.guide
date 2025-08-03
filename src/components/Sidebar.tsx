@@ -2,9 +2,29 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import UserMenu from "./UserMenu";
+
+interface ShipWithBuilds {
+  id: string;
+  shipId: string;
+  name: string;
+  category: string;
+  _count: {
+    builds: number;
+  };
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [shipsWithBuilds, setShipsWithBuilds] = useState<ShipWithBuilds[]>([]);
+
+  useEffect(() => {
+    fetch("/api/ships-with-builds")
+      .then((res) => res.json())
+      .then((ships) => setShipsWithBuilds(ships))
+      .catch((err) => console.error("Failed to fetch ships:", err));
+  }, []);
 
   const navigation = [
     {
@@ -28,7 +48,11 @@ export default function Sidebar() {
       section: "SHIP BUILDS",
       items: [
         { name: "Overview", href: "/ship-builds" },
-        { name: "Gladius", href: "/ship-builds/gladius" },
+        { name: "Submit Build", href: "/submit-build" },
+        ...shipsWithBuilds.map((ship) => ({
+          name: ship.name,
+          href: `/ship-builds/${ship.shipId}`,
+        })),
       ],
     },
   ];
@@ -74,6 +98,11 @@ export default function Sidebar() {
           ))}
         </div>
       </nav>
+
+      {/* User Menu at bottom of sidebar */}
+      <div className="p-4 border-t border-zinc-800">
+        <UserMenu />
+      </div>
     </aside>
   );
 }

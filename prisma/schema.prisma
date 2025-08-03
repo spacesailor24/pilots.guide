@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// NextAuth models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  builds        Build[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Ship and Build models
+model Ship {
+  id        String   @id @default(cuid())
+  shipId    String   @unique // e.g., "gladius", "arrow"
+  name      String   // e.g., "Gladius", "Arrow"
+  category  String   // e.g., "Light Fighter", "Heavy Fighter"
+  imagePath String?
+  maxCrew   Int      @default(1)
+  builds    Build[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  order     Int      @default(0)
+  builds    Build[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Patch {
+  id        String   @id @default(cuid())
+  version   String   @unique
+  name      String?
+  isActive  Boolean  @default(true)
+  order     Int      @default(0)
+  builds    Build[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Build {
+  id          String    @id @default(cuid())
+  buildName   String
+  creator     String
+  userId      String?   // Optional link to authenticated user
+  shipId      String
+  categoryId  String
+  patchId     String
+  erkulUrl    String
+  description String?   @db.Text
+  featured    Boolean   @default(false)
+  ship        Ship      @relation(fields: [shipId], references: [id])
+  user        User?     @relation(fields: [userId], references: [id])
+  category    Category  @relation(fields: [categoryId], references: [id])
+  patch       Patch     @relation(fields: [patchId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([shipId])
+  @@index([userId])
+  @@index([categoryId])
+  @@index([patchId])
+}
