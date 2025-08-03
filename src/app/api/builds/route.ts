@@ -10,7 +10,11 @@ export async function GET(request: NextRequest) {
     const featured = searchParams.get("featured");
     const userId = searchParams.get("userId");
 
-    const where: any = {};
+    const where: {
+      shipId?: string;
+      featured?: boolean;
+      userId?: string;
+    } = {};
     
     if (shipId) where.shipId = shipId;
     if (featured === "true") where.featured = true;

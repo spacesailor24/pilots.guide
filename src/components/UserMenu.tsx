@@ -32,20 +32,20 @@ export default function UserMenu() {
         onClick={() => setShowDropdown(!showDropdown)}
         className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-zinc-800 transition-colors"
       >
-        {session.user.image ? (
+        {session.user?.image ? (
           <Image
             src={session.user.image}
-            alt={session.user.name || "User"}
+            alt={session.user?.name || "User"}
             width={32}
             height={32}
             className="rounded-full"
           />
         ) : (
           <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center text-white font-bold">
-            {session.user.name?.[0] || "U"}
+            {session.user?.name?.[0] || "U"}
           </div>
         )}
-        <span className="text-sm text-gray-300">{session.user.name}</span>
+        <span className="text-sm text-gray-300">{session.user?.name}</span>
         <svg
           className={`w-4 h-4 text-gray-400 transition-transform ${
             showDropdown ? "rotate-180" : ""
@@ -73,9 +73,9 @@ export default function UserMenu() {
             <div className="py-1">
               <div className="px-4 py-2 border-b border-zinc-800">
                 <p className="text-sm font-medium text-white">
-                  {session.user.name}
+                  {session.user?.name}
                 </p>
-                {session.user.email ? (
+                {session.user?.email ? (
                   <p className="text-xs text-gray-400">{session.user.email}</p>
                 ) : null}
               </div>

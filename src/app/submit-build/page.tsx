@@ -143,7 +143,7 @@ export default function SubmitBuildPage() {
           </h1>
           <p className="text-gray-300 mb-8">
             Share your ship build with the community. Your Discord username (
-            {session.user.name}) will be credited as the creator.
+            {session.user?.name}) will be credited as the creator.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">

@@ -2,10 +2,10 @@
 
 import { signIn, useSession } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import AppLayout from "@/components/AppLayout";
 
-export default function SignInPage() {
+function SignInContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -67,5 +67,19 @@ export default function SignInPage() {
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={
+      <AppLayout>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-gray-400">Loading...</div>
+        </div>
+      </AppLayout>
+    }>
+      <SignInContent />
+    </Suspense>
   );
 }
