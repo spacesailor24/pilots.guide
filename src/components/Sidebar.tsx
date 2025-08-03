@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import UserMenu from "./UserMenu";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const navigation = [
     {
@@ -30,6 +32,7 @@ export default function Sidebar() {
       items: [
         { name: "Overview", href: "/ship-builds" },
         { name: "Gladius", href: "/ship-builds/gladius" },
+        ...(session ? [{ name: "Submit Build", href: "/submit-build" }] : []),
       ],
     },
   ];

@@ -18,6 +18,37 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      // Auto-claim builds when user signs in for the first time
+      if (account?.provider === "discord" && user.name) {
+        try {
+          // Find builds with matching creator name but no userId
+          const unclaimedBuilds = await prisma.build.findMany({
+            where: {
+              creator: user.name,
+              userId: null,
+            },
+          });
+
+          // Claim the builds for this user
+          if (unclaimedBuilds.length > 0) {
+            await prisma.build.updateMany({
+              where: {
+                creator: user.name,
+                userId: null,
+              },
+              data: {
+                userId: user.id,
+              },
+            });
+            console.log(`✅ Auto-claimed ${unclaimedBuilds.length} builds for ${user.name}`);
+          }
+        } catch (error) {
+          console.error("Failed to auto-claim builds:", error);
+        }
+      }
+      return true;
+    },
     session: async ({ session, token }) => {
       if (session?.user && token?.sub) {
         session.user.id = token.sub;

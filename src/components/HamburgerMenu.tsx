@@ -3,11 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import UserMenu from "./UserMenu";
 
 export default function HamburgerMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const navigation = [
     {
@@ -29,7 +31,10 @@ export default function HamburgerMenu() {
     },
     {
       section: "SHIP BUILDS",
-      items: [{ name: "Overview", href: "/ship-builds" }],
+      items: [
+        { name: "Overview", href: "/ship-builds" },
+        ...(session ? [{ name: "Submit Build", href: "/submit-build" }] : []),
+      ],
     },
   ];
 

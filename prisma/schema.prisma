@@ -73,24 +73,47 @@ model Ship {
   updatedAt DateTime @updatedAt
 }
 
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  order     Int      @default(0)
+  builds    Build[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Patch {
+  id        String   @id @default(cuid())
+  version   String   @unique
+  name      String?
+  isActive  Boolean  @default(true)
+  order     Int      @default(0)
+  builds    Build[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Build {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   buildName   String
   creator     String
-  userId      String?  // Optional link to authenticated user
+  userId      String?   // Optional link to authenticated user
   shipId      String
+  categoryId  String
+  patchId     String
   erkulUrl    String
-  description String   @db.Text
-  category    String   // e.g., "PvP", "PvE", "Multi-Role"
-  gameMode    String   // e.g., "PvP", "PvE", "Both"
-  patch       String?  // Game patch version
-  featured    Boolean  @default(false)
-  verified    Boolean  @default(false)
-  ship        Ship     @relation(fields: [shipId], references: [id])
-  user        User?    @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  description String?   @db.Text
+  featured    Boolean   @default(false)
+  ship        Ship      @relation(fields: [shipId], references: [id])
+  user        User?     @relation(fields: [userId], references: [id])
+  category    Category  @relation(fields: [categoryId], references: [id])
+  patch       Patch     @relation(fields: [patchId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([shipId])
   @@index([userId])
+  @@index([categoryId])
+  @@index([patchId])
 }

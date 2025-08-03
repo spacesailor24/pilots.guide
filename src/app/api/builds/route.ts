@@ -20,6 +20,8 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         ship: true,
+        category: true,
+        patch: true,
         user: {
           select: {
             id: true,
@@ -53,11 +55,10 @@ export async function POST(request: NextRequest) {
       buildName,
       creator,
       shipId,
+      categoryId,
+      patchId,
       erkulUrl,
       description,
-      category,
-      gameMode,
-      patch,
     } = body;
 
     // Verify the ship exists
@@ -72,21 +73,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Verify the category exists
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId },
+    });
+
+    if (!category) {
+      return NextResponse.json(
+        { error: "Category not found" },
+        { status: 404 }
+      );
+    }
+
+    // Verify the patch exists
+    const patch = await prisma.patch.findUnique({
+      where: { id: patchId },
+    });
+
+    if (!patch) {
+      return NextResponse.json(
+        { error: "Patch not found" },
+        { status: 404 }
+      );
+    }
+
     const build = await prisma.build.create({
       data: {
         buildName,
         creator,
         userId: session?.user?.id,
         shipId,
+        categoryId,
+        patchId,
         erkulUrl,
         description,
-        category,
-        gameMode,
-        patch,
-        verified: false, // Builds need to be verified by admin
       },
       include: {
         ship: true,
+        category: true,
+        patch: true,
         user: true,
       },
     });
