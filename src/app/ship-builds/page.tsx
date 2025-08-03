@@ -14,49 +14,49 @@ const ships: Ship[] = [
   {
     id: "gladius",
     name: "Gladius",
-    category: "Fighter",
+    category: "Light Fighter",
     imagePath: "/images/gladius.png",
     maxCrew: 1,
   },
   {
     id: "arrow",
     name: "Arrow",
-    category: "Fighter",
+    category: "Light Fighter",
     imagePath: "/images/arrow.png",
     maxCrew: 1,
   },
   {
     id: "f8c-lightning",
     name: "F8C Lightning",
-    category: "Fighter",
+    category: "Heavy Fighter",
     imagePath: "/images/f8c.png",
     maxCrew: 1,
   },
   {
     id: "hornet-ghost",
     name: "F7C-M Hornet Ghost",
-    category: "Fighter",
+    category: "Medium Stealth Fighter",
     imagePath: "/images/hornet-mkii-ghost.png",
     maxCrew: 1,
   },
   {
     id: "hornet-super",
     name: "F7C-M Hornet Super",
-    category: "Fighter",
+    category: "Medium Fighter",
     imagePath: "/images/hornet-mkii-super.png",
     maxCrew: 1,
   },
   {
     id: "guardian-mx",
     name: "Guardian MX",
-    category: "Multi-Role",
+    category: "Heavy Missile Boat",
     imagePath: "/images/guardian-mx.png",
     maxCrew: 1,
   },
   {
     id: "guardian-qi",
     name: "Guardian QI",
-    category: "Multi-Role",
+    category: "Heavy Interdictor",
     imagePath: "/images/guardian-qi.png",
     maxCrew: 1,
   },
@@ -89,11 +89,11 @@ export default function ShipBuildsPage() {
               className="group block"
             >
               <div className="bg-black rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 group-hover:scale-105 h-full p-4">
-                <div className="h-full border-2 border-red-600 rounded-lg flex flex-col items-center justify-center p-8">
-                  <div className="text-8xl text-red-600 group-hover:text-red-400 transition-colors mb-4">
+                <div className="h-full border-2 border-red-800 rounded-lg flex flex-col items-center justify-center p-8">
+                  <div className="text-8xl text-red-800 group-hover:text-red-500 transition-colors mb-4">
                     +
                   </div>
-                  <h3 className="text-xl font-bold text-red-600 group-hover:text-red-400 transition-colors">
+                  <h3 className="text-xl font-bold text-red-800 group-hover:text-red-500 transition-colors">
                     Submit a Build
                   </h3>
                 </div>
@@ -128,7 +128,7 @@ export default function ShipBuildsPage() {
                   </div>
 
                   {/* Bottom Section - Ship Info */}
-                  <div className="bg-gradient-to-r from-blue-900/80 to-teal-900/80 p-4">
+                  <div className="bg-gradient-to-r to-red-900/80 from-black p-4">
                     {/* Ship Name */}
                     <h3 className="text-xl font-bold text-white mb-2 group-hover:text-red-400 transition-colors">
                       {ship.name}
