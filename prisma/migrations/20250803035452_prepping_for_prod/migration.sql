@@ -59,19 +59,42 @@ CREATE TABLE "public"."Ship" (
 );
 
 -- CreateTable
+CREATE TABLE "public"."Category" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."Patch" (
+    "id" TEXT NOT NULL,
+    "version" TEXT NOT NULL,
+    "name" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "order" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Patch_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "public"."Build" (
     "id" TEXT NOT NULL,
     "buildName" TEXT NOT NULL,
     "creator" TEXT NOT NULL,
     "userId" TEXT,
     "shipId" TEXT NOT NULL,
+    "categoryId" TEXT NOT NULL,
+    "patchId" TEXT NOT NULL,
     "erkulUrl" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
-    "category" TEXT NOT NULL,
-    "gameMode" TEXT NOT NULL,
-    "patch" TEXT,
+    "description" TEXT,
     "featured" BOOLEAN NOT NULL DEFAULT false,
-    "verified" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -97,10 +120,25 @@ CREATE UNIQUE INDEX "VerificationToken_identifier_token_key" ON "public"."Verifi
 CREATE UNIQUE INDEX "Ship_shipId_key" ON "public"."Ship"("shipId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Category_name_key" ON "public"."Category"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Category_slug_key" ON "public"."Category"("slug");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Patch_version_key" ON "public"."Patch"("version");
+
+-- CreateIndex
 CREATE INDEX "Build_shipId_idx" ON "public"."Build"("shipId");
 
 -- CreateIndex
 CREATE INDEX "Build_userId_idx" ON "public"."Build"("userId");
+
+-- CreateIndex
+CREATE INDEX "Build_categoryId_idx" ON "public"."Build"("categoryId");
+
+-- CreateIndex
+CREATE INDEX "Build_patchId_idx" ON "public"."Build"("patchId");
 
 -- AddForeignKey
 ALTER TABLE "public"."Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -113,3 +151,9 @@ ALTER TABLE "public"."Build" ADD CONSTRAINT "Build_shipId_fkey" FOREIGN KEY ("sh
 
 -- AddForeignKey
 ALTER TABLE "public"."Build" ADD CONSTRAINT "Build_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."Build" ADD CONSTRAINT "Build_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "public"."Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."Build" ADD CONSTRAINT "Build_patchId_fkey" FOREIGN KEY ("patchId") REFERENCES "public"."Patch"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
