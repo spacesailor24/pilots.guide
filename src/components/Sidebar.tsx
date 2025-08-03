@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import UserMenu from "./UserMenu";
 import { useShips } from "@/contexts/ShipsContext";
+import LinkWithTransition from "./LinkWithTransition";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -45,7 +46,7 @@ export default function Sidebar() {
       {/* Logo/Brand */}
       <div className="p-4">
         <h1 className="text-lg font-semibold text-red-500">
-          <Link href="/welcome">pilots.guide</Link>
+          <LinkWithTransition href="/welcome">pilots.guide</LinkWithTransition>
         </h1>
         <p className="text-sm text-gray-400">The Pilot's Guide to the 'Verse</p>
       </div>
@@ -63,7 +64,7 @@ export default function Sidebar() {
                   const isActive = pathname === item.href;
                   return (
                     <li key={item.href}>
-                      <Link
+                      <LinkWithTransition
                         href={item.href}
                         className={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
                           isActive
@@ -72,7 +73,7 @@ export default function Sidebar() {
                         }`}
                       >
                         {item.name}
-                      </Link>
+                      </LinkWithTransition>
                     </li>
                   );
                 })}
