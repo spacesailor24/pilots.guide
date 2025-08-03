@@ -40,6 +40,12 @@ export default function HamburgerMenu() {
         })),
       ],
     },
+    {
+      section: "MATCH MAKING",
+      items: [
+        { name: "Create Match", href: "/matchmaking/create-match" },
+      ],
+    },
   ];
 
   return (

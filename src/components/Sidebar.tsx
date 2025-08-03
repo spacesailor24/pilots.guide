@@ -38,6 +38,12 @@ export default function Sidebar() {
         })),
       ],
     },
+    {
+      section: "MATCH MAKING",
+      items: [
+        { name: "Create Match", href: "/matchmaking/create-match" },
+      ],
+    },
   ];
 
   return (
