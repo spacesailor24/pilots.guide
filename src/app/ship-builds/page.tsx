@@ -83,7 +83,7 @@ export default function ShipBuildsPage() {
           <div className="grid grid-cols-[repeat(auto-fill,minmax(500px,1fr))] gap-6">
             {/* Add a Build Card */}
             <a
-              href="https://github.com/spacesailor24/pilots.guide"
+              href="https://github.com/spacesailor24/pilots.guide/issues/new?assignees=spacesailor24&labels=ship-build%2Csubmission&projects=&template=ship-build-submission.yml"
               target="_blank"
               rel="noopener noreferrer"
               className="group block"

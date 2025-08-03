@@ -1,0 +1,108 @@
+name: Ship Build Submission
+description: Submit a new ship build for the Pilot's Guide
+title: "[BUILD] Ship Name - Build Name"
+labels: ["ship-build", "submission"]
+assignees:
+  - spacesailor24
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for contributing a ship build to the Pilot's Guide! Please fill out the information below to help us add your build to the site.
+
+  - type: input
+    id: build-name
+    attributes:
+      label: Build Name
+      description: What do you call this build?
+      placeholder: e.g., "Meta Gladius", "Stealth Arrow", "PvP Hornet"
+    validations:
+      required: true
+
+  - type: input
+    id: ship-name
+    attributes:
+      label: Ship Name
+      description: What ship is this build for?
+      placeholder: e.g., "Gladius", "Arrow", "F7C-M Hornet Super"
+    validations:
+      required: true
+
+  - type: input
+    id: creator
+    attributes:
+      label: Creator Handle
+      description: Your in-game name or preferred username
+      placeholder: e.g., "AcePilot_42", "StarCitizen_Player"
+    validations:
+      required: true
+
+  - type: input
+    id: erkul-url
+    attributes:
+      label: Erkul Games Loadout URL
+      description: Link to your build on erkul.games
+      placeholder: https://www.erkul.games/loadout/KXHBgPy1
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Build Description
+      description: Describe what this build is optimized for and any special tactics or usage notes
+      placeholder: A versatile light fighter build optimized for dogfighting and escort missions. Features balanced firepower and maneuverability for both PvE and PvP encounters.
+      value: |
+        **Role:** 
+        **Strengths:** 
+        **Weaknesses:** 
+        **Usage Notes:**
+    validations:
+      required: true
+
+  - type: dropdown
+    id: build-category
+    attributes:
+      label: Build Category
+      description: What type of build is this?
+      options:
+        - Light Fighter
+        - Medium Fighter
+        - Heavy Fighter
+        - Stealth Fighter
+        - Missile Boat
+        - Interdictor
+        - Multi-Role
+        - Racing
+        - Exploration
+        - Mining
+        - Cargo
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: game-mode
+    attributes:
+      label: Optimized For
+      description: What game mode is this build primarily designed for?
+      options:
+        - PvP (Player vs Player)
+        - PvE (Player vs Environment)
+        - Both PvP and PvE
+        - Racing
+        - Mining
+        - Exploration
+        - Cargo Running
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-notes
+    attributes:
+      label: Additional Notes
+      description: Any other information you'd like to include about this build
+      placeholder: Alternative component suggestions, situational modifications, etc.
+    validations:
+      required: false
