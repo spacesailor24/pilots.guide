@@ -1,12 +1,45 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import AppLayout from "@/components/AppLayout";
 
 export default function SignInPage() {
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (status === "loading") return;
+    if (session) {
+      router.push(callbackUrl);
+    }
+  }, [session, status, router, callbackUrl]);
+
+  // Show loading while checking session
+  if (status === "loading") {
+    return (
+      <AppLayout>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-gray-400">Loading...</div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // Don't show sign-in form if already authenticated (prevents flash)
+  if (session) {
+    return (
+      <AppLayout>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-gray-400">Redirecting...</div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

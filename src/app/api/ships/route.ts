@@ -5,16 +5,6 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     const ships = await prisma.ship.findMany({
-      include: {
-        builds: {
-          where: {
-            verified: true,
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
-      },
       orderBy: {
         name: "asc",
       },

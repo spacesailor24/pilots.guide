@@ -18,7 +18,12 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
+      // Remove email to maintain privacy (we only want Discord username)
+      if (account?.provider === "discord") {
+        user.email = null;
+      }
+      
       // Auto-claim builds when user signs in for the first time
       if (account?.provider === "discord" && user.name) {
         try {
@@ -52,6 +57,8 @@ export const authOptions: NextAuthOptions = {
     session: async ({ session, token }) => {
       if (session?.user && token?.sub) {
         session.user.id = token.sub;
+        // Ensure email is not included in session for privacy
+        session.user.email = null;
       }
       return session;
     },

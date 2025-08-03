@@ -90,7 +90,7 @@ const builds = [
     erkulUrl: "https://www.erkul.games/loadout/PBQ03dFh",
     patchSlug: "4.2.1-LIVE.10007308",
     description: "",
-    featured: false,
+    featured: true,
   },
   {
     buildName: "[PvE] PU",

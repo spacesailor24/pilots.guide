@@ -3,11 +3,29 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import UserMenu from "./UserMenu";
+
+interface ShipWithBuilds {
+  id: string;
+  shipId: string;
+  name: string;
+  category: string;
+  _count: {
+    builds: number;
+  };
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const [shipsWithBuilds, setShipsWithBuilds] = useState<ShipWithBuilds[]>([]);
+
+  useEffect(() => {
+    fetch("/api/ships-with-builds")
+      .then((res) => res.json())
+      .then((ships) => setShipsWithBuilds(ships))
+      .catch((err) => console.error("Failed to fetch ships:", err));
+  }, []);
 
   const navigation = [
     {
@@ -31,8 +49,11 @@ export default function Sidebar() {
       section: "SHIP BUILDS",
       items: [
         { name: "Overview", href: "/ship-builds" },
-        { name: "Gladius", href: "/ship-builds/gladius" },
-        ...(session ? [{ name: "Submit Build", href: "/submit-build" }] : []),
+        { name: "Submit Build", href: "/submit-build" },
+        ...shipsWithBuilds.map((ship) => ({
+          name: ship.name,
+          href: `/ship-builds/${ship.shipId}`,
+        })),
       ],
     },
   ];

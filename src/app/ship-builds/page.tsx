@@ -2,68 +2,49 @@ import AppLayout from "@/components/AppLayout";
 import Link from "next/link";
 import Image from "next/image";
 import SubmitBuildCard from "@/components/SubmitBuildCard";
+import { prisma } from "@/lib/prisma";
 
 interface Ship {
   id: string;
+  shipId: string;
   name: string;
   category: string;
-  imagePath: string;
+  imagePath: string | null;
   maxCrew: number;
+  _count: {
+    builds: number;
+  };
 }
 
-const ships: Ship[] = [
-  {
-    id: "gladius",
-    name: "Gladius",
-    category: "Light Fighter",
-    imagePath: "/images/gladius.png",
-    maxCrew: 1,
-  },
-  {
-    id: "arrow",
-    name: "Arrow",
-    category: "Light Fighter",
-    imagePath: "/images/arrow.png",
-    maxCrew: 1,
-  },
-  {
-    id: "f8c-lightning",
-    name: "F8C Lightning",
-    category: "Heavy Fighter",
-    imagePath: "/images/f8c.png",
-    maxCrew: 1,
-  },
-  {
-    id: "hornet-ghost",
-    name: "F7C-M Hornet Ghost",
-    category: "Medium Stealth Fighter",
-    imagePath: "/images/hornet-mkii-ghost.png",
-    maxCrew: 1,
-  },
-  {
-    id: "hornet-super",
-    name: "F7C-M Hornet Super",
-    category: "Medium Fighter",
-    imagePath: "/images/hornet-mkii-super.png",
-    maxCrew: 1,
-  },
-  {
-    id: "guardian-mx",
-    name: "Guardian MX",
-    category: "Heavy Missile Boat",
-    imagePath: "/images/guardian-mx.png",
-    maxCrew: 1,
-  },
-  {
-    id: "guardian-qi",
-    name: "Guardian QI",
-    category: "Heavy Interdictor",
-    imagePath: "/images/guardian-qi.png",
-    maxCrew: 1,
-  },
-];
+async function getShipsWithBuilds(): Promise<Ship[]> {
+  try {
+    const ships = await prisma.ship.findMany({
+      where: {
+        builds: {
+          some: {},
+        },
+      },
+      include: {
+        _count: {
+          select: {
+            builds: true,
+          },
+        },
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
 
-export default function ShipBuildsPage() {
+    return ships;
+  } catch (error) {
+    console.error("Failed to fetch ships with builds:", error);
+    return [];
+  }
+}
+
+export default async function ShipBuildsPage() {
+  const ships = await getShipsWithBuilds();
   return (
     <AppLayout>
       <div className="mb-8">
@@ -88,7 +69,7 @@ export default function ShipBuildsPage() {
             {ships.map((ship, index) => (
               <Link
                 key={ship.id}
-                href={`/ship-builds/${ship.id}`}
+                href={`/ship-builds/${ship.shipId}`}
                 className="group block"
               >
                 <div className="bg-zinc-900 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all duration-200 group-hover:scale-105">
@@ -119,7 +100,7 @@ export default function ShipBuildsPage() {
                       {ship.name}
                     </h3>
 
-                    {/* Ship Type and Crew */}
+                    {/* Ship Type, Crew, and Build Count */}
                     <div className="flex items-center text-white text-sm">
                       <div className="flex items-center">
                         <span>{ship.category}</span>
@@ -127,6 +108,10 @@ export default function ShipBuildsPage() {
                       <span className="mx-2">/</span>
                       <div className="flex items-center">
                         <span>Max crew: {ship.maxCrew}</span>
+                      </div>
+                      <span className="mx-2">/</span>
+                      <div className="flex items-center">
+                        <span>{ship._count.builds} builds</span>
                       </div>
                     </div>
                   </div>
