@@ -1,39 +1,64 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import AppLayout from "@/components/AppLayout";
 import CustomDateTimePicker from "@/components/CustomDateTimePicker";
 
-// Mock user data for player selection (sorted alphabetically)
-const mockPlayers = [
-  { id: "2", username: "bjax", image: null },
-  { id: "4", username: "BountySeeker_88", image: null },
-  { id: "9", username: "Gatekeeper_77", image: null },
-  { id: "6", username: "NightHunter_44", image: null },
-  { id: "5", username: "PhantomOps_55", image: null },
-  { id: "7", username: "RocketRain_11", image: null },
-  { id: "1", username: "spacesai1or", image: null },
-  { id: "10", username: "StarSeeker_99", image: null },
-  { id: "8", username: "SupportPilot_22", image: null },
-  { id: "3", username: "WarHawk_21", image: null },
-].sort((a, b) =>
-  a.username.toLowerCase().localeCompare(b.username.toLowerCase())
-);
+interface Player {
+  id: string;
+  username: string | null;
+  displayName: string | null;
+  image: string | null;
+  claimed: boolean;
+}
 
 export default function CreateMatchPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [matchName, setMatchName] = useState("");
   const [startDateTime, setStartDateTime] = useState<Date | null>(null);
   const [endDateTime, setEndDateTime] = useState<Date | null>(null);
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  // Redirect if not admin
+  useEffect(() => {
+    if (status !== "loading" && (!session?.user?.isAdmin)) {
+      router.push("/");
+    }
+  }, [session, status, router]);
+
+  // Fetch players from database
+  useEffect(() => {
+    const fetchPlayers = async () => {
+      if (!session?.user?.isAdmin) return;
+      
+      try {
+        const response = await fetch("/api/players");
+        if (response.ok) {
+          const data = await response.json();
+          setPlayers(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch players:", error);
+      }
+    };
+
+    fetchPlayers();
+  }, [session?.user?.isAdmin]);
 
   // Filter and sort players based on search term
   const filteredPlayers = useMemo(() => {
-    return mockPlayers.filter((player) =>
-      player.username.toLowerCase().includes(searchTerm.toLowerCase())
+    return players.filter((player) =>
+      player.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [searchTerm]);
+  }, [players, searchTerm]);
 
   const handleMatchNameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,16 +90,70 @@ export default function CreateMatchPage() {
     );
   };
 
-  const handleFinalSubmit = (e: React.FormEvent) => {
+  const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Creating match:", {
-      matchName,
-      startDateTime: startDateTime?.toISOString(),
-      endDateTime: endDateTime?.toISOString() || null,
-      selectedPlayers,
-    });
-    // TODO: Implement match creation logic
+    if (!startDateTime || selectedPlayers.length === 0) return;
+
+    setCreating(true);
+    try {
+      const response = await fetch("/api/matches", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          matchName,
+          startDateTime: startDateTime.toISOString(),
+          endDateTime: endDateTime?.toISOString() || null,
+          selectedPlayers,
+        }),
+      });
+
+      if (response.ok) {
+        const match = await response.json();
+        console.log("Match created successfully:", match);
+        
+        // Reset form
+        setStep(1);
+        setMatchName("");
+        setStartDateTime(null);
+        setEndDateTime(null);
+        setSelectedPlayers([]);
+        setSearchTerm("");
+        
+        // You could redirect to a success page or show a success message here
+        alert("Match created successfully!");
+      } else {
+        const error = await response.json();
+        console.error("Failed to create match:", error);
+        alert("Failed to create match. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error creating match:", error);
+      alert("Failed to create match. Please try again.");
+    } finally {
+      setCreating(false);
+    }
   };
+
+  // Show loading while checking auth
+  if (status === "loading") {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-center">
+            <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // Return null while redirecting if not admin
+  if (!session?.user?.isAdmin) {
+    return null;
+  }
 
   return (
     <AppLayout>
@@ -305,14 +384,29 @@ export default function CreateMatchPage() {
                         }`}
                       >
                         <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
-                            <span className="text-xs font-medium">
-                              {player.username.charAt(0).toUpperCase()}
-                            </span>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            player.claimed ? 'bg-green-600' : 'bg-gray-600'
+                          }`}>
+                            {player.claimed && player.image ? (
+                              <img
+                                src={player.image}
+                                alt={player.displayName || "Player"}
+                                className="w-8 h-8 rounded-full"
+                              />
+                            ) : (
+                              <span className="text-xs font-medium">
+                                {player.displayName?.charAt(0).toUpperCase()}
+                              </span>
+                            )}
                           </div>
-                          <span className="text-sm font-medium">
-                            {player.username}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">
+                              {player.displayName}
+                            </span>
+                            {!player.claimed && (
+                              <span className="text-xs text-gray-500">unclaimed</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -324,10 +418,10 @@ export default function CreateMatchPage() {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  disabled={selectedPlayers.length === 0}
+                  disabled={selectedPlayers.length === 0 || creating}
                   className="px-6 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Create Match
+                  {creating ? "Creating..." : "Create Match"}
                 </button>
               </div>
             </form>

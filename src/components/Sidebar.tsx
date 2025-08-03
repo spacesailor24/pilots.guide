@@ -1,13 +1,17 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import UserMenu from "./UserMenu";
 import { useShips } from "@/contexts/ShipsContext";
 import LinkWithTransition from "./LinkWithTransition";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const { shipsWithBuilds } = useShips();
+  
+  const isAdmin = session?.user?.isAdmin || false;
 
   const navigation = [
     {
@@ -38,12 +42,21 @@ export default function Sidebar() {
         })),
       ],
     },
-    {
-      section: "MATCH MAKING",
-      items: [
-        { name: "Create Match", href: "/matchmaking/create-match" },
-      ],
-    },
+    // Only show Match Making and Admin sections to admins
+    ...(isAdmin ? [
+      {
+        section: "MATCH MAKING",
+        items: [
+          { name: "Create Match", href: "/matchmaking/create-match" },
+        ],
+      },
+      {
+        section: "ADMIN",
+        items: [
+          { name: "Manage Players", href: "/admin/players" },
+        ],
+      },
+    ] : []),
   ];
 
   return (

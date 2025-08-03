@@ -250,24 +250,59 @@ async function main() {
   });
   console.log("✅ Created permission: ADMIN");
 
-  // Create spacesai1or user with admin permission
-  const spacesailorUser = await prisma.user.create({
-    data: {
-      username: "spacesai1or",
-      image: null,
-    },
-  });
-  console.log("✅ Created user: spacesai1or");
+  // Active players list
+  const players = [
+    "bjax",
+    "MrOldMaan",
+    "ChicagoTed",
+    "spacesai1or",
+    "Cypher-1",
+    "Lobus",
+    "Apau11o",
+    "PelicanHazard",
+    "WinRAR42",
+    "Zwoid",
+    "Zero0721",
+    "IntruderThree",
+    "AltFour_Industries",
+    "Mandoolk",
+    "LaoPak",
+    "SIGNCUTTER",
+    "Nanolis",
+    "Captain Maddog",
+    "HarryComa",
+    "Bloodangel92",
+    "TangibleRaptor"
+  ];
 
-  // Grant admin permission to spacesai1or
-  await prisma.userPermission.create({
-    data: {
-      userId: spacesailorUser.id,
-      permissionId: adminPermission.id,
-      grantedBy: "system",
-    },
+  // Create all players as unclaimed users
+  for (const playerName of players) {
+    await prisma.user.create({
+      data: {
+        username: null, // Will be filled when they sign in with Discord
+        displayName: playerName, // The name we show in the app
+        claimed: false,
+        image: null,
+      },
+    });
+    console.log(`✅ Created unclaimed user: ${playerName}`);
+  }
+
+  // Find spacesai1or user and grant admin permission
+  const spacesailorUser = await prisma.user.findFirst({
+    where: { displayName: "spacesai1or" }
   });
-  console.log("✅ Granted ADMIN permission to spacesai1or");
+
+  if (spacesailorUser) {
+    await prisma.userPermission.create({
+      data: {
+        userId: spacesailorUser.id,
+        permissionId: adminPermission.id,
+        grantedBy: "system",
+      },
+    });
+    console.log("✅ Granted ADMIN permission to spacesai1or");
+  }
 
   // Create categories
   for (const category of categories) {

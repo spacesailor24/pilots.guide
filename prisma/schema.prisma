@@ -43,12 +43,16 @@ model Session {
 
 model User {
   id               String           @id @default(cuid())
-  username         String?          @unique
+  username         String?          @unique // Discord username
+  displayName      String?          // Name shown in app (e.g., "bjax", "MrOldMaan")
   image            String?
+  claimed          Boolean          @default(false) // Track if user account is claimed
   accounts         Account[]
   sessions         Session[]
   builds           Build[]
   permissions      UserPermission[]
+  createdMatches   Match[]
+  matchPlayers     MatchPlayer[]
 }
 
 model VerificationToken {
@@ -139,4 +143,32 @@ model UserPermission {
   @@unique([userId, permissionId])
   @@index([userId])
   @@index([permissionId])
+}
+
+// Match system
+model Match {
+  id          String      @id @default(cuid())
+  name        String
+  startTime   DateTime
+  endTime     DateTime?
+  createdBy   String
+  creator     User        @relation(fields: [createdBy], references: [id])
+  players     MatchPlayer[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([createdBy])
+  @@index([startTime])
+}
+
+model MatchPlayer {
+  id       String @id @default(cuid())
+  matchId  String
+  userId   String
+  match    Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@unique([matchId, userId])
+  @@index([matchId])
+  @@index([userId])
 }
