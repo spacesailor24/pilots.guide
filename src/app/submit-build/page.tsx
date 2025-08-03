@@ -44,17 +44,14 @@ export default function SubmitBuildPage() {
 
   // No redirect needed - show sign in screen inline
 
-  // Fetch available ships, categories, and patches
+  // Fetch available ships, categories, and patches in one request
   useEffect(() => {
-    Promise.all([
-      fetch("/api/ships").then((res) => res.json()),
-      fetch("/api/categories").then((res) => res.json()),
-      fetch("/api/patches").then((res) => res.json()),
-    ])
-      .then(([shipsData, categoriesData, patchesData]) => {
-        setShips(Array.isArray(shipsData) ? shipsData : []);
-        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
-        setPatches(Array.isArray(patchesData) ? patchesData : []);
+    fetch("/api/submit-build-data")
+      .then((res) => res.json())
+      .then((data) => {
+        setShips(Array.isArray(data.ships) ? data.ships : []);
+        setCategories(Array.isArray(data.categories) ? data.categories : []);
+        setPatches(Array.isArray(data.patches) ? data.patches : []);
       })
       .catch((err) => {
         console.error("Failed to fetch data:", err);

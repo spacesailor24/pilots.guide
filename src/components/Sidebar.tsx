@@ -1,30 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import UserMenu from "./UserMenu";
-
-interface ShipWithBuilds {
-  id: string;
-  shipId: string;
-  name: string;
-  category: string;
-  _count: {
-    builds: number;
-  };
-}
+import { useShips } from "@/contexts/ShipsContext";
+import LinkWithTransition from "./LinkWithTransition";
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [shipsWithBuilds, setShipsWithBuilds] = useState<ShipWithBuilds[]>([]);
-
-  useEffect(() => {
-    fetch("/api/ships-with-builds")
-      .then((res) => res.json())
-      .then((ships) => setShipsWithBuilds(ships))
-      .catch((err) => console.error("Failed to fetch ships:", err));
-  }, []);
+  const { shipsWithBuilds } = useShips();
 
   const navigation = [
     {
@@ -62,7 +45,7 @@ export default function Sidebar() {
       {/* Logo/Brand */}
       <div className="p-4">
         <h1 className="text-lg font-semibold text-red-500">
-          <Link href="/welcome">pilots.guide</Link>
+          <LinkWithTransition href="/welcome">pilots.guide</LinkWithTransition>
         </h1>
         <p className="text-sm text-gray-400">The Pilot's Guide to the 'Verse</p>
       </div>
@@ -80,7 +63,7 @@ export default function Sidebar() {
                   const isActive = pathname === item.href;
                   return (
                     <li key={item.href}>
-                      <Link
+                      <LinkWithTransition
                         href={item.href}
                         className={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
                           isActive
@@ -89,7 +72,7 @@ export default function Sidebar() {
                         }`}
                       >
                         {item.name}
-                      </Link>
+                      </LinkWithTransition>
                     </li>
                   );
                 })}

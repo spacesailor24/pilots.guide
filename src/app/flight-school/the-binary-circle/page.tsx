@@ -67,8 +67,6 @@ export default function DayOnePage() {
         <YouTubeEmbed
           videoId="OetHKLhj8rk"
           title="How To Beat Most Players in Master Modes"
-          height="500px"
-          className="mb-6"
         />
 
         {/* Key Concepts */}

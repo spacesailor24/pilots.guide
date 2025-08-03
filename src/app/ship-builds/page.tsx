@@ -1,7 +1,7 @@
 import AppLayout from "@/components/AppLayout";
-import Link from "next/link";
 import Image from "next/image";
 import SubmitBuildCard from "@/components/SubmitBuildCard";
+import LinkWithTransition from "@/components/LinkWithTransition";
 import { prisma } from "@/lib/prisma";
 
 interface Ship {
@@ -67,7 +67,7 @@ export default async function ShipBuildsPage() {
             <SubmitBuildCard />
 
             {ships.map((ship, index) => (
-              <Link
+              <LinkWithTransition
                 key={ship.id}
                 href={`/ship-builds/${ship.shipId}`}
                 className="group block"
@@ -116,7 +116,7 @@ export default async function ShipBuildsPage() {
                     </div>
                   </div>
                 </div>
-              </Link>
+              </LinkWithTransition>
             ))}
           </div>
         </div>
