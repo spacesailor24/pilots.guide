@@ -78,6 +78,7 @@ export default function PipNeutralizationPage() {
         <YouTubeEmbed
           videoId="ADkxWp21YBg"
           title="PIP Neutralization Tutorial"
+          className="mb-6"
         />
 
         {/* Practice Exercises */}

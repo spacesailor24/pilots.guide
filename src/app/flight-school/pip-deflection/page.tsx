@@ -101,7 +101,11 @@ export default function PipDeflectionPage() {
         </div>
 
         {/* Video Tutorial */}
-        <YouTubeEmbed videoId="19yHuv0TgiY" title="PIP Deflection Tutorial" />
+        <YouTubeEmbed
+          videoId="19yHuv0TgiY"
+          title="PIP Deflection Tutorial"
+          className="mb-6"
+        />
 
         {/* When to Use PIP Deflection */}
         <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg mb-6">
