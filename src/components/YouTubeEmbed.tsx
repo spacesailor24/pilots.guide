@@ -5,7 +5,6 @@ interface YouTubeEmbedProps {
   title: string;
   startTime?: number;
   width?: string;
-  height?: string;
   className?: string;
 }
 
@@ -14,7 +13,6 @@ export default function YouTubeEmbed({
   title,
   startTime = 0,
   width = "100%",
-  height = "400px",
   className = "",
 }: YouTubeEmbedProps) {
   // Convert YouTube URL to video ID if full URL is provided
@@ -43,9 +41,7 @@ export default function YouTubeEmbed({
           src={embedUrl}
           title={title}
           width={width}
-          height={height}
-          className="w-full"
-          style={{ minHeight: height }}
+          className="w-full h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[75vh] xl:h-[80vh] border-0"
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
