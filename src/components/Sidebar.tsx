@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import UserMenu from "./UserMenu";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -74,6 +75,11 @@ export default function Sidebar() {
           ))}
         </div>
       </nav>
+
+      {/* User Menu at bottom of sidebar */}
+      <div className="p-4 border-t border-zinc-800">
+        <UserMenu />
+      </div>
     </aside>
   );
 }
