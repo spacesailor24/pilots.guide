@@ -5,16 +5,16 @@ export default function WelcomePage() {
   return (
     <AppLayout>
       {/* Hero Section */}
-      <div className="mb-12 text-center bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
+      <div className="mb-8 sm:mb-12 text-center bg-zinc-900 rounded-lg border border-red-600 p-4 sm:p-6 shadow-lg">
         <div className="flex items-center justify-center">
-          <h1 className="text-4xl font-bold text-white">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
             <>Welcome to the Pilot's Guide to the 'Verse</>
           </h1>
         </div>
       </div>
 
-      <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg mb-6">
-        <h2 className="text-xl font-semibold text-white mb-3">
+      <div className="bg-zinc-900 rounded-lg border border-red-600 p-4 sm:p-6 shadow-lg mb-6">
+        <h2 className="text-lg sm:text-xl font-semibold text-white mb-3">
           <>Flight School</>
         </h2>
         <p className="text-gray-300 mb-4">
@@ -23,7 +23,7 @@ export default function WelcomePage() {
             techniques from basic maneuvers to advanced tactics.
           </>
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="bg-black/30 p-4 rounded-md">
             <h3 className="font-medium text-red-400 mb-2">
               <>The Binary Circle</>
@@ -86,8 +86,8 @@ export default function WelcomePage() {
         </div>
       </div>
 
-      <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg mb-6">
-        <h2 className="text-xl font-semibold text-white mb-3">
+      <div className="bg-zinc-900 rounded-lg border border-red-600 p-4 sm:p-6 shadow-lg mb-6">
+        <h2 className="text-lg sm:text-xl font-semibold text-white mb-3">
           <>Ship Builds</>
         </h2>
         <p className="text-gray-300 mb-4">
@@ -96,7 +96,7 @@ export default function WelcomePage() {
             loadout for your playstyle and ship.
           </>
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="bg-black/30 p-4 rounded-md">
             <h3 className="font-medium text-red-400 mb-2">
               <>Gladius</>

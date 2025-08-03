@@ -26,15 +26,20 @@ export default function Sidebar() {
     },
     {
       section: "SHIP BUILDS",
-      items: [{ name: "Overview", href: "/ship-builds" }],
+      items: [
+        { name: "Overview", href: "/ship-builds" },
+        { name: "Gladius", href: "/ship-builds/gladius" },
+      ],
     },
   ];
 
   return (
-    <aside className="w-64 bg-zinc-900 flex flex-col">
+    <aside className="hidden lg:flex w-64 bg-zinc-900 flex-col">
       {/* Logo/Brand */}
       <div className="p-4">
-        <h1 className="text-lg font-semibold text-red-500">pilots.guide</h1>
+        <h1 className="text-lg font-semibold text-red-500">
+          <Link href="/welcome">pilots.guide</Link>
+        </h1>
         <p className="text-sm text-gray-400">The Pilot's Guide to the 'Verse</p>
       </div>
 
