@@ -17,8 +17,8 @@ export const authOptions = {
         if (existingUser) {
           return {
             id: existingUser.id,
-            email: null,
-            emailVerified: null,
+            email: existingUser.email || "",
+            emailVerified: existingUser.emailVerified,
             name: existingUser.username,
             image: existingUser.image,
           };
@@ -38,7 +38,7 @@ export const authOptions = {
       
       return {
         id: newUser.id,
-        email: newUser.email,
+        email: newUser.email || "",
         emailVerified: newUser.emailVerified,
         name: newUser.username,
         image: newUser.image,

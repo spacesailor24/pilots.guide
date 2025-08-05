@@ -44,7 +44,8 @@ export default function RankingsPage() {
 
   // Redirect if not admin
   useEffect(() => {
-    if (status !== "loading" && (!session?.user?.isAdmin)) {
+    const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
+    if (status !== "loading" && !isAdmin) {
       router.push("/");
     }
   }, [session, status, router]);
@@ -52,7 +53,8 @@ export default function RankingsPage() {
   // Fetch rankings data
   useEffect(() => {
     const fetchRankings = async () => {
-      if (!session?.user?.isAdmin) return;
+      const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
+      if (!isAdmin) return;
 
       setLoading(true);
       setError(null);
@@ -77,7 +79,7 @@ export default function RankingsPage() {
     };
 
     fetchRankings();
-  }, [session?.user?.isAdmin, currentPage, minGames]);
+  }, [session?.user, currentPage, minGames]);
 
   // Rankings skeleton component
   const RankingsSkeleton = () => (
@@ -121,7 +123,8 @@ export default function RankingsPage() {
     );
   }
 
-  if (!session?.user?.isAdmin) {
+  const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
+  if (!isAdmin) {
     return null;
   }
 

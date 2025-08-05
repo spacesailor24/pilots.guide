@@ -26,12 +26,12 @@ export default function CreateTournamentPage() {
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [players, setPlayers] = useState<Player[]>([]);
-  const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
 
   // Redirect if not admin
   useEffect(() => {
-    if (status !== "loading" && (!session?.user?.isAdmin)) {
+    const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
+    if (status !== "loading" && !isAdmin) {
       router.push("/");
     }
   }, [session, status, router]);
@@ -39,7 +39,8 @@ export default function CreateTournamentPage() {
   // Fetch players from database
   useEffect(() => {
     const fetchPlayers = async () => {
-      if (!session?.user?.isAdmin) return;
+      const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
+      if (!isAdmin) return;
       
       try {
         const response = await fetch("/api/players");
@@ -53,7 +54,7 @@ export default function CreateTournamentPage() {
     };
 
     fetchPlayers();
-  }, [session?.user?.isAdmin]);
+  }, [session?.user]);
 
   // Filter and sort players based on search term
   const filteredPlayers = useMemo(() => {
@@ -156,7 +157,8 @@ export default function CreateTournamentPage() {
   }
 
   // Return null while redirecting if not admin
-  if (!session?.user?.isAdmin) {
+  const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
+  if (!isAdmin) {
     return null;
   }
 

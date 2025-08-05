@@ -49,7 +49,8 @@ async function getShipWithBuilds(shipId: string): Promise<Ship | null> {
             user: {
               select: {
                 id: true,
-                name: true,
+                username: true,
+                displayName: true,
                 image: true,
               },
             },
@@ -62,7 +63,7 @@ async function getShipWithBuilds(shipId: string): Promise<Ship | null> {
       },
     });
 
-    return ship;
+    return ship as any;
   } catch (error) {
     console.error("Failed to fetch ship with builds:", error);
     return null;

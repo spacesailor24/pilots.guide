@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useState } from "react";
+import { forwardRef } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -38,7 +38,7 @@ export default function CustomDateTimePicker({
 }: CustomDateTimePickerProps) {
   const handleChange = (
     date: Date | null,
-    event?: React.SyntheticEvent<any>
+    _event?: React.SyntheticEvent<any>
   ) => {
     onChange(date);
   };

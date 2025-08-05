@@ -34,7 +34,8 @@ export default function AdminPage() {
 
   // Redirect if not admin
   useEffect(() => {
-    if (status !== "loading" && (!session?.user?.isAdmin)) {
+    const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
+    if (status !== "loading" && !isAdmin) {
       router.push("/");
     }
   }, [session, status, router]);
@@ -42,7 +43,8 @@ export default function AdminPage() {
   // Fetch admin data
   useEffect(() => {
     const fetchData = async () => {
-      if (!session?.user?.isAdmin) return;
+      const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
+      if (!isAdmin) return;
 
       try {
         const response = await fetch("/api/admin/accounts");
@@ -59,7 +61,7 @@ export default function AdminPage() {
     };
 
     fetchData();
-  }, [session?.user?.isAdmin]);
+  }, [session?.user]);
 
   const handleLinkAccount = async (discordUserId: string, playerAccountId: string) => {
     const linkKey = `${discordUserId}-${playerAccountId}`;
@@ -115,7 +117,8 @@ export default function AdminPage() {
     );
   }
 
-  if (!session?.user?.isAdmin) {
+  const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
+  if (!isAdmin) {
     return null; // Router will redirect
   }
 

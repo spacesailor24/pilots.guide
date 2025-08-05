@@ -172,40 +172,6 @@ async function getRecentOpponents(playerId: string, tournamentId: string, lookba
   return opponents;
 }
 
-/**
- * Create skill-based groups for balanced matchmaking
- */
-function createSkillGroups(players: PlayerRating[], maxGroupSize: number = 6): PlayerRating[][] {
-  const sortedPlayers = [...players].sort((a, b) => b.ordinal - a.ordinal);
-  const groups: PlayerRating[][] = [];
-  
-  let currentGroup: PlayerRating[] = [];
-  const maxSkillGap = 3.0; // Maximum ordinal difference within a group
-  
-  for (const player of sortedPlayers) {
-    if (currentGroup.length === 0) {
-      currentGroup = [player];
-      continue;
-    }
-
-    const groupTopSkill = currentGroup[0]?.ordinal || 0;
-    const skillGap = groupTopSkill - player.ordinal;
-    
-    // Start new group if skill gap too large or group is full
-    if (skillGap > maxSkillGap || currentGroup.length >= maxGroupSize) {
-      groups.push(currentGroup);
-      currentGroup = [player];
-    } else {
-      currentGroup.push(player);
-    }
-  }
-  
-  if (currentGroup.length > 0) {
-    groups.push(currentGroup);
-  }
-  
-  return groups;
-}
 
 /**
  * Calculate match quality score (lower is better)
@@ -508,8 +474,13 @@ export async function updateRatingsAfterMatch(
     .sort((a, b) => a.placement - b.placement) // Sort by placement (1st, 2nd, etc.)
     .map(team => 
       team.playerIds.map(playerId => {
-        const rating = playerRatings.get(playerId);
-        return rating ? { mu: rating.mu, sigma: rating.sigma } : rating();
+        const playerRating = playerRatings.get(playerId);
+        if (playerRating) {
+          return { mu: playerRating.mu, sigma: playerRating.sigma };
+        } else {
+          const defaultRating = rating();
+          return { mu: defaultRating.mu, sigma: defaultRating.sigma };
+        }
       })
     );
   

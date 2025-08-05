@@ -61,18 +61,20 @@ export async function POST(request: NextRequest) {
       });
 
       // Transfer any builds that were created under the player's displayName
-      await tx.build.updateMany({
-        where: {
-          creator: playerAccount.displayName,
-          userId: null,
-        },
-        data: {
-          userId: discordUserId,
-        },
-      });
+      if (playerAccount.displayName) {
+        await tx.build.updateMany({
+          where: {
+            creator: playerAccount.displayName,
+            userId: null,
+          },
+          data: {
+            userId: discordUserId,
+          },
+        });
+      }
 
       // Transfer any match participations
-      await tx.matchPlayer.updateMany({
+      await tx.matchParticipant.updateMany({
         where: {
           userId: playerAccountId,
         },

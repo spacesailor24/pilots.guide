@@ -1,32 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import AppLayout from "@/components/AppLayout";
 import { useTournaments } from "@/contexts/TournamentsContext";
 import LinkWithTransition from "@/components/LinkWithTransition";
 
-interface Tournament {
-  id: string;
-  name: string;
-  startTime: string;
-  endTime: string | null;
-  creator: {
-    id: string;
-    username: string | null;
-    displayName: string | null;
-  };
-  players: Array<{
-    id: string;
-    user: {
-      id: string;
-      username: string | null;
-      displayName: string | null;
-      image: string | null;
-    };
-  }>;
-}
 
 export default function CompletedTournamentsPage() {
   const { data: session, status } = useSession();
@@ -35,7 +15,8 @@ export default function CompletedTournamentsPage() {
 
   // Redirect if not admin
   useEffect(() => {
-    if (status !== "loading" && (!session?.user?.isAdmin)) {
+    const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
+    if (status !== "loading" && !isAdmin) {
       router.push("/");
     }
   }, [session, status, router]);

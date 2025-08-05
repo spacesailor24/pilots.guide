@@ -14,7 +14,8 @@ export default function TournamentsPage() {
 
   // Redirect if not admin
   useEffect(() => {
-    if (status !== "loading" && (!session?.user?.isAdmin)) {
+    const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
+    if (status !== "loading" && !isAdmin) {
       router.push("/");
     }
   }, [session, status, router]);
@@ -34,7 +35,8 @@ export default function TournamentsPage() {
   }
 
   // Return null while redirecting if not admin
-  if (!session?.user?.isAdmin) {
+  const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
+  if (!isAdmin) {
     return null;
   }
 

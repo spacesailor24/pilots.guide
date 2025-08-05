@@ -278,6 +278,21 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
     setSelectedWinners({});
   }, [currentRound]);
 
+  // Notification helpers
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    const id = Date.now().toString();
+    setNotifications(prev => [...prev, { id, type, message }]);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+  };
+
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
   // Show skeleton loading while checking auth or loading tournament data
   if (status === "loading" || (loading && !tournament)) {
     return (
@@ -349,17 +364,17 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
           
           // Set current round to the latest generation round
           const maxGenerationRound = updatedTournament.matches?.length > 0 
-            ? Math.max(...updatedTournament.matches.map((m: any) => m.generationRound || 1))
+            ? Math.max(...updatedTournament.matches.map((m: { generationRound?: number }) => m.generationRound || 1))
             : 1;
           setCurrentRound(maxGenerationRound);
         }
       } else {
         const error = await response.json();
-        alert(`Failed to generate match: ${error.error}`);
+        showNotification('error', `Failed to generate match: ${error.error}`);
       }
     } catch (error) {
       console.error("Error generating match:", error);
-      alert("Failed to generate match. Please try again.");
+      showNotification('error', 'Failed to generate match. Please try again.');
     } finally {
       setGeneratingMatch(false);
     }
@@ -383,7 +398,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
     });
 
     if (matchesToSubmit.length === 0) {
-      alert("No matches selected for result submission.");
+      showNotification('error', 'No matches selected for result submission.');
       return;
     }
 
@@ -426,11 +441,11 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
 
       // Show results summary
       if (successCount > 0 && failedMatches.length === 0) {
-        alert(`Successfully submitted results for ${successCount} match${successCount > 1 ? 'es' : ''}!`);
+        showNotification('success', `Successfully submitted results for ${successCount} match${successCount > 1 ? 'es' : ''}!`);
       } else if (successCount > 0 && failedMatches.length > 0) {
-        alert(`Submitted ${successCount} match${successCount > 1 ? 'es' : ''} successfully.\nFailed: ${failedMatches.join(', ')}`);
+        showNotification('error', `Submitted ${successCount} match${successCount > 1 ? 'es' : ''} successfully. Failed: ${failedMatches.join(', ')}`);
       } else {
-        alert(`Failed to submit results for: ${failedMatches.join(', ')}`);
+        showNotification('error', `Failed to submit results for: ${failedMatches.join(', ')}`);
       }
         
       // Refresh tournament data to show updated match status
@@ -441,7 +456,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
       }
     } catch (error) {
       console.error("Error submitting batch results:", error);
-      alert("Failed to submit results. Please try again.");
+      showNotification('error', 'Failed to submit results. Please try again.');
     } finally {
       setSubmittingResults(false);
     }
@@ -466,7 +481,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
       });
 
       if (response.ok) {
-        alert("Tournament has been successfully finalized!");
+        showNotification('success', 'Tournament has been successfully finalized!');
         // Refresh tournament data
         const tournamentResponse = await fetch(`/api/tournaments/${tournament.id}`);
         if (tournamentResponse.ok) {
@@ -475,35 +490,53 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
         }
       } else {
         const error = await response.json();
-        alert(`Failed to finalize tournament: ${error.error}`);
+        showNotification('error', `Failed to finalize tournament: ${error.error}`);
       }
     } catch (error) {
       console.error("Error finalizing tournament:", error);
-      alert("Failed to finalize tournament. Please try again.");
+      showNotification('error', 'Failed to finalize tournament. Please try again.');
     } finally {
       setFinalizingTournament(false);
     }
   };
 
-  // Helper function to get player stats
-  const getPlayerStats = async (userId: string) => {
-    try {
-      const response = await fetch(`/api/players/rankings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
-      });
-      if (response.ok) {
-        return await response.json();
-      }
-    } catch (error) {
-      console.error('Failed to fetch player stats:', error);
-    }
-    return null;
-  };
+
+  // Notification Component
+  const NotificationContainer = () => (
+    <div className="fixed top-4 right-4 z-50 space-y-2">
+      {notifications.map((notification) => (
+        <div
+          key={notification.id}
+          className={`px-4 py-3 rounded-lg border shadow-lg animate-in slide-in-from-right-2 duration-300 max-w-sm ${
+            notification.type === 'success'
+              ? 'bg-green-900/90 border-green-600 text-green-100'
+              : 'bg-red-900/90 border-red-600 text-red-100'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className={`w-2 h-2 rounded-full ${
+                notification.type === 'success' ? 'bg-green-400' : 'bg-red-400'
+              }`} />
+              <span className="text-sm font-medium">{notification.message}</span>
+            </div>
+            <button
+              onClick={() => removeNotification(notification.id)}
+              className="ml-3 text-gray-300 hover:text-white transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <AppLayout>
+      <NotificationContainer />
       <div className="space-y-6">
         {/* Header */}
         <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
@@ -673,7 +706,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
           </div>
           
           {currentRoundData && currentRoundData.matches && currentRoundData.matches.length > 0 ? (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               {currentRoundData.matches.map((match) => {
                 const matchStartDate = new Date(match.startTime);
                 const matchEndDate = match.endTime ? new Date(match.endTime) : null;

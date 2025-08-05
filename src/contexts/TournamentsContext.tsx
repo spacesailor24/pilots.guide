@@ -55,7 +55,8 @@ export function TournamentsProvider({ children }: { children: React.ReactNode })
   const [error, setError] = useState<string | null>(null);
 
   const fetchTournaments = async () => {
-    if (!session?.user?.isAdmin) {
+    const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
+    if (!isAdmin) {
       setActiveTournaments([]);
       setCompletedTournaments([]);
       return;
@@ -85,7 +86,7 @@ export function TournamentsProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     fetchTournaments();
-  }, [session?.user?.isAdmin]);
+  }, [session?.user, fetchTournaments]);
 
   const refreshTournaments = async () => {
     await fetchTournaments();
