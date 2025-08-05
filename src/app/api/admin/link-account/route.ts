@@ -93,8 +93,8 @@ export async function POST(request: NextRequest) {
       success: true,
       message: `Successfully linked ${discordUser.username} to ${playerAccount.displayName}`,
     });
-  } catch (error: any) {
-    if (error.message === "Admin access required") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Admin access required") {
       return NextResponse.json(
         { error: "Admin access required" },
         { status: 403 }

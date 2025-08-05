@@ -32,7 +32,7 @@ export default function HamburgerMenu() {
     }
   };
   
-  const isAdmin = (session?.user as any)?.isAdmin || false;
+  const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin || false;
 
   const navigation = [
     {

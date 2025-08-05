@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import AppLayout from "@/components/AppLayout";
 
 interface RankedPlayer {
@@ -216,9 +217,11 @@ export default function RankingsPage() {
                   {/* Player Info */}
                   <div className="col-span-4 flex items-center space-x-3">
                     {player.claimed && player.image ? (
-                      <img
+                      <Image
                         src={player.image}
                         alt={player.displayName || "Player"}
+                        width={48}
+                        height={48}
                         className="w-12 h-12 rounded-full"
                       />
                     ) : (

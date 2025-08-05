@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import AppLayout from "@/components/AppLayout";
 import { useTournaments } from "@/contexts/TournamentsContext";
 import LinkWithTransition from "@/components/LinkWithTransition";
@@ -36,7 +37,7 @@ export default function CompletedTournamentsPage() {
   }
 
   // Return null while redirecting if not admin
-  if (!(session?.user as any)?.isAdmin) {
+  if (!(session?.user as { isAdmin?: boolean })?.isAdmin) {
     return null;
   }
 
@@ -171,9 +172,11 @@ export default function CompletedTournamentsPage() {
                             className="flex items-center space-x-2 bg-zinc-700 px-3 py-1 rounded-full"
                           >
                             {player.user.image ? (
-                              <img
+                              <Image
                                 src={player.user.image}
                                 alt={player.user.displayName || "Player"}
+                                width={20}
+                                height={20}
                                 className="w-5 h-5 rounded-full"
                               />
                             ) : (

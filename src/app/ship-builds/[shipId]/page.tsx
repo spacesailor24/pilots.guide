@@ -63,7 +63,7 @@ async function getShipWithBuilds(shipId: string): Promise<Ship | null> {
       },
     });
 
-    return ship as any;
+    return ship as Ship;
   } catch (error) {
     console.error("Failed to fetch ship with builds:", error);
     return null;

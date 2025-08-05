@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import AppLayout from "@/components/AppLayout";
 import { useTournaments } from "@/contexts/TournamentsContext";
 
@@ -15,6 +16,13 @@ interface TournamentPlayer {
     image: string | null;
     claimed: boolean;
   };
+}
+
+interface PlayerStats {
+  rank: number;
+  rating: number;
+  gamesPlayed: number;
+  ordinal: number;
 }
 
 interface MatchTeam {
@@ -170,17 +178,20 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
     </div>
   );
 
+  // Extract isAdmin check to avoid inline type assertion
+  const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
+  const userId = (session?.user as { id?: string })?.id;
+
   // Redirect if not admin
   useEffect(() => {
-    if (status !== "loading" && (!(session?.user as any)?.isAdmin)) {
+    if (status !== "loading" && !isAdmin) {
       router.push("/");
     }
-  }, [session, status, router]);
+  }, [isAdmin, status, router]);
 
   // Fetch tournament data
-  useEffect(() => {
-    const fetchTournament = async () => {
-      if (!(session?.user as any)?.isAdmin) return;
+  const fetchTournament = useCallback(async () => {
+    if (!isAdmin) return;
 
       const { id } = await params;
       
@@ -237,10 +248,11 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
           setLoading(false);
         }
       }
-    };
+  }, [isAdmin, params, currentTournamentId, tournament, activeTournaments, completedTournaments]);
 
+  useEffect(() => {
     fetchTournament();
-  }, [params, (session?.user as any)?.isAdmin, activeTournaments, completedTournaments]);
+  }, [fetchTournament]);
 
   // Group matches by their explicit generationRound field
   const groupedMatches = tournament?.matches?.reduce((groups, match) => {
@@ -271,7 +283,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
       // On initial load, set to latest round if there are multiple rounds
       setCurrentRound(totalRounds);
     }
-  }, [totalRounds]);
+  }, [totalRounds, currentRound]);
 
   // Clear selected winners when changing rounds
   useEffect(() => {
@@ -312,7 +324,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
   }
 
   // Return null while redirecting if not admin
-  if (!(session?.user as any)?.isAdmin) {
+  if (!isAdmin) {
     return null;
   }
 
@@ -404,7 +416,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
 
     setSubmittingResults(true);
     let successCount = 0;
-    let failedMatches: string[] = [];
+    const failedMatches: string[] = [];
 
     try {
       // Submit results for each selected match
@@ -558,9 +570,11 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
               <span className="text-gray-400">Created by:</span>
               <div className="flex items-center space-x-2 mt-1">
                 {tournament.creator.image ? (
-                  <img
+                  <Image
                     src={tournament.creator.image}
                     alt={tournament.creator.displayName || "Creator"}
+                    width={24}
+                    height={24}
                     className="w-6 h-6 rounded-full"
                   />
                 ) : (
@@ -676,7 +690,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
               )}
             </div>
             {/* Action buttons for tournament creator */}
-            {isActive && (session?.user as any)?.id === tournament.creator.id && (
+            {isActive && userId === tournament.creator.id && (
               <div className="flex items-center gap-3">
                 {/* Submit Results button - only show when there are selected winners */}
                 {Object.keys(selectedWinners).length > 0 && (
@@ -712,7 +726,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
                 const matchEndDate = match.endTime ? new Date(match.endTime) : null;
                 const matchIsActive = !matchEndDate || matchEndDate > new Date();
                 const hasResults = match.teams && match.teams.some(team => team.placement !== null);
-                const canSubmitResults = matchIsActive && (session?.user as any)?.id === tournament.creator.id && !hasResults;
+                const canSubmitResults = matchIsActive && userId === tournament.creator.id && !hasResults;
                 const selectedWinner = selectedWinners[match.id];
                 
                 return (
@@ -816,7 +830,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
           ) : (
             <div className="text-center py-8 text-gray-500">
               <p className="mb-4">{totalRounds === 0 ? "No matches generated yet" : `No matches in Round ${currentRound}`}</p>
-              {isActive && (session?.user as any)?.id === tournament.creator.id && (
+              {isActive && userId === tournament.creator.id && (
                 <p className="text-sm text-gray-400">
                   {totalRounds === 0 
                     ? "Click \"Generate Next Round\" to create the first round of matches."
@@ -829,7 +843,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
         </div>
 
         {/* Matchmaking Options Panel */}
-        {showMatchmakingOptions && isActive && (session?.user as any)?.id === tournament.creator.id && (
+        {showMatchmakingOptions && isActive && userId === tournament.creator.id && (
           <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-white">Matchmaking Options</h2>
@@ -977,7 +991,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
             </div>
             
             {/* Finalize Tournament button - only show for active tournaments and if user is the creator */}
-            {isActive && (session?.user as any)?.id === tournament.creator.id && (
+            {isActive && userId === tournament.creator.id && (
               <button
                 onClick={handleFinalizeTournament}
                 disabled={finalizingTournament}
@@ -1000,7 +1014,7 @@ interface PlayerCardProps {
 }
 
 function PlayerCard({ player }: PlayerCardProps) {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<PlayerStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -1030,9 +1044,11 @@ function PlayerCard({ player }: PlayerCardProps) {
       <div className="flex flex-col items-center space-y-2">
         {/* Avatar */}
         {player.user.claimed && player.user.image ? (
-          <img
+          <Image
             src={player.user.image}
             alt={player.user.displayName || "Player"}
+            width={32}
+            height={32}
             className="w-8 h-8 rounded-full"
           />
         ) : (
@@ -1104,7 +1120,7 @@ interface MatchPlayerCardProps {
 }
 
 function MatchPlayerCard({ participant }: MatchPlayerCardProps) {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<PlayerStats | null>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -1130,9 +1146,11 @@ function MatchPlayerCard({ participant }: MatchPlayerCardProps) {
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-2">
         {participant.user.claimed && participant.user.image ? (
-          <img
+          <Image
             src={participant.user.image}
             alt={participant.user.displayName || "Player"}
+            width={24}
+            height={24}
             className="w-6 h-6 rounded-full"
           />
         ) : (

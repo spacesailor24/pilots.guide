@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 
 interface Tournament {
@@ -54,7 +54,7 @@ export function TournamentsProvider({ children }: { children: React.ReactNode })
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTournaments = async () => {
+  const fetchTournaments = useCallback(async () => {
     const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
     if (!isAdmin) {
       setActiveTournaments([]);
@@ -82,7 +82,7 @@ export function TournamentsProvider({ children }: { children: React.ReactNode })
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.user]);
 
   useEffect(() => {
     fetchTournaments();

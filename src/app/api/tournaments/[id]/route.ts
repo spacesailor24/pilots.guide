@@ -83,8 +83,8 @@ export async function GET(
     }
 
     return NextResponse.json(tournament);
-  } catch (error: any) {
-    if (error.message === "Admin access required") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Admin access required") {
       return NextResponse.json(
         { error: "Admin access required" },
         { status: 403 }

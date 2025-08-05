@@ -13,7 +13,14 @@ interface CustomDateTimePickerProps {
   autoFocus?: boolean;
 }
 
-const CustomInput = forwardRef<HTMLInputElement, any>(
+interface CustomInputProps {
+  value?: string;
+  onClick?: () => void;
+  placeholder?: string;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+const CustomInput = forwardRef<HTMLInputElement, CustomInputProps>(
   ({ value, onClick, placeholder, onChange }, ref) => (
     <input
       ref={ref}
@@ -37,8 +44,7 @@ export default function CustomDateTimePicker({
   autoFocus = false,
 }: CustomDateTimePickerProps) {
   const handleChange = (
-    date: Date | null,
-    _event?: React.SyntheticEvent<any>
+    date: Date | null
   ) => {
     onChange(date);
   };

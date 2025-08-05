@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import AppLayout from "@/components/AppLayout";
 import CustomDateTimePicker from "@/components/CustomDateTimePicker";
 import { useTournaments } from "@/contexts/TournamentsContext";
@@ -395,9 +396,11 @@ export default function CreateTournamentPage() {
                             player.claimed ? 'bg-green-600' : 'bg-gray-600'
                           }`}>
                             {player.claimed && player.image ? (
-                              <img
+                              <Image
                                 src={player.image}
                                 alt={player.displayName || "Player"}
+                                width={32}
+                                height={32}
                                 className="w-8 h-8 rounded-full"
                               />
                             ) : (

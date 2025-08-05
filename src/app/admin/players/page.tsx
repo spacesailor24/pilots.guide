@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import AppLayout from "@/components/AppLayout";
 
 interface UnclaimedAccount {
@@ -220,9 +221,11 @@ export default function AdminPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       {user.image ? (
-                        <img
+                        <Image
                           src={user.image}
                           alt={user.username || "User"}
+                          width={40}
+                          height={40}
                           className="w-10 h-10 rounded-full"
                         />
                       ) : (
