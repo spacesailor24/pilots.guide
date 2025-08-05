@@ -44,6 +44,8 @@ model Session {
 model User {
   id                  String              @id @default(cuid())
   username            String?             @unique // Discord username
+  email               String?             @unique // Required by NextAuth PrismaAdapter
+  emailVerified       DateTime?           // Required by NextAuth PrismaAdapter
   displayName         String?             // Name shown in app (e.g., "bjax", "MrOldMaan")
   image               String?
   claimed             Boolean             @default(false) // Track if user account is claimed

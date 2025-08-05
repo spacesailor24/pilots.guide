@@ -382,13 +382,16 @@ async function main() {
   });
 
   if (tournamentPlayers.length >= 4) {
+    // Find spacesai1or to be the tournament creator
+    const spacesailorUser = tournamentPlayers.find(p => p.displayName === "spacesai1or") || tournamentPlayers[0];
+
     // Create an active tournament
     const activeTournament = await prisma.tournament.create({
       data: {
         name: "Test Tournament Active",
         startTime: oneHourAgo,
         endTime: threeDaysFromNow,
-        createdBy: tournamentPlayers[0].id, // spacesai1or
+        createdBy: spacesailorUser.id,
         players: {
           create: tournamentPlayers.map(player => ({
             userId: player.id,
@@ -444,7 +447,7 @@ async function main() {
         name: "Test Tournament Completed",
         startTime: new Date(currentTime.getTime() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
         endTime: oneDayAgo,
-        createdBy: tournamentPlayers[0].id, // spacesai1or
+        createdBy: spacesailorUser.id,
         players: {
           create: tournamentPlayers.slice(0, 4).map(player => ({
             userId: player.id,

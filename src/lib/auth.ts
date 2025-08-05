@@ -7,15 +7,42 @@ import { prisma } from "./prisma";
 export const authOptions = {
   adapter: {
     ...PrismaAdapter(prisma),
-    createUser: (user: any) => {
+    createUser: async (user: any) => {
       console.log("🔍 Creating user with adapter:", user);
-      return prisma.user.create({
+      
+      // If user already has an ID, it means we handled the merge in signIn callback
+      if (user.id) {
+        console.log("✅ User already exists with ID:", user.id, "- returning existing user");
+        const existingUser = await prisma.user.findUnique({ where: { id: user.id } });
+        if (existingUser) {
+          return {
+            id: existingUser.id,
+            email: null,
+            emailVerified: null,
+            name: existingUser.username,
+            image: existingUser.image,
+          };
+        }
+      }
+      
+      // Otherwise, create new user normally
+      const newUser = await prisma.user.create({
         data: {
           username: user.name,
+          email: user.email || null,
+          emailVerified: user.emailVerified || null,
           image: user.image,
           claimed: false,
         },
       });
+      
+      return {
+        id: newUser.id,
+        email: newUser.email,
+        emailVerified: newUser.emailVerified,
+        name: newUser.username,
+        image: newUser.image,
+      };
     },
   },
   providers: [
@@ -33,15 +60,63 @@ export const authOptions = {
     async signIn({ user, account }: { user: any; account: any }) {
       console.log("🔍 SignIn callback triggered", { user: user.name, provider: account?.provider });
       
-      // Remove email to maintain privacy (we only want Discord username)
-      if (account?.provider === "discord") {
-        user.email = null;
-      }
-      
-      // Store the username and displayName for later use (PrismaAdapter will create the user after this callback)
+      // Handle Discord sign-in by checking for existing unclaimed account
       if (account?.provider === "discord" && user.name) {
-        user.username = user.name;
-        user.displayName = user.name; // Set displayName to match seeded accounts
+        try {
+          // Look for existing unclaimed user with matching displayName
+          const existingUser = await prisma.user.findFirst({
+            where: {
+              displayName: user.name,
+              claimed: false,
+              username: null, // Seeded accounts have null username
+            }
+          });
+
+          if (existingUser) {
+            console.log("🔍 Found existing unclaimed account, updating with Discord info");
+            
+            // Update the existing user with Discord information
+            await prisma.user.update({
+              where: { id: existingUser.id },
+              data: {
+                username: user.name,
+                image: user.image,
+                claimed: true
+              }
+            });
+
+            // Create the account record manually to link Discord to existing user
+            await prisma.account.create({
+              data: {
+                userId: existingUser.id,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                access_token: account.access_token,
+                token_type: account.token_type,
+                scope: account.scope,
+              }
+            });
+
+            // Update the user object to use the existing user's ID so PrismaAdapter won't create new user
+            user.id = existingUser.id;
+            user.email = null; // Ensure no email is stored
+            
+            console.log("✅ Merged Discord account with existing user and created account link");
+          } else {
+            // No existing account found, proceed with normal flow
+            user.email = null; // Remove email for privacy
+            user.username = user.name;
+            user.displayName = user.name;
+            console.log("🔍 No matching unclaimed account found, creating new user");
+          }
+        } catch (error) {
+          console.error("❌ Error during sign-in account check:", error);
+          // Fall back to normal flow if there's an error
+          user.email = null;
+          user.username = user.name;
+          user.displayName = user.name;
+        }
       }
       
       console.log("✅ SignIn callback completed successfully");
@@ -55,7 +130,7 @@ export const authOptions = {
         // Ensure email is not included in session for privacy
         session.user.email = null;
         
-        // Fetch user permissions from database and handle account claiming
+        // Fetch user permissions from database
         try {
           const userWithPermissions = await prisma.user.findUnique({
             where: { id: token.sub },
@@ -69,118 +144,14 @@ export const authOptions = {
           });
           
           if (userWithPermissions) {
-            // Check if this user needs to claim an account (unclaimed and no permissions)
-            if (!userWithPermissions.claimed && userWithPermissions.permissions.length === 0 && userWithPermissions.username) {
-              console.log("🔍 Checking for unclaimed account to claim for:", userWithPermissions.username);
-              
-              // Look for unclaimed user account with matching displayName
-              const unclaimedUser = await prisma.user.findFirst({
-                where: {
-                  displayName: userWithPermissions.username,
-                  claimed: false,
-                  username: null, // These are seeded players
-                  id: { not: userWithPermissions.id }, // Don't match self
-                },
-                include: {
-                  permissions: {
-                    include: {
-                      permission: true
-                    }
-                  }
-                }
-              });
-
-              if (unclaimedUser) {
-                console.log("✅ Found matching unclaimed account, transferring data");
-                
-                // Transfer the unclaimed user's data to the Discord user
-                await prisma.$transaction(async (tx) => {
-                  // Update the Discord user with the player's displayName and claimed status
-                  await tx.user.update({
-                    where: { id: userWithPermissions.id },
-                    data: {
-                      displayName: unclaimedUser.displayName,
-                      claimed: true,
-                    },
-                  });
-
-                  // Transfer permissions
-                  for (const userPermission of unclaimedUser.permissions) {
-                    await tx.userPermission.create({
-                      data: {
-                        userId: userWithPermissions.id,
-                        permissionId: userPermission.permissionId,
-                        grantedBy: userPermission.grantedBy,
-                      },
-                    });
-                  }
-
-                  // Transfer builds that were created under the player's displayName
-                  await tx.build.updateMany({
-                    where: {
-                      creator: unclaimedUser.displayName,
-                      userId: null,
-                    },
-                    data: {
-                      userId: userWithPermissions.id,
-                    },
-                  });
-
-                  // Transfer any tournament participations
-                  await tx.tournamentPlayer.updateMany({
-                    where: {
-                      userId: unclaimedUser.id,
-                    },
-                    data: {
-                      userId: userWithPermissions.id,
-                    },
-                  });
-
-                  // Delete the old unclaimed user account
-                  await tx.user.delete({
-                    where: { id: unclaimedUser.id },
-                  });
-                });
-                
-                console.log(`✅ Successfully claimed account for ${userWithPermissions.username} with ${unclaimedUser.permissions.length} permissions`);
-                
-                // Refetch user with updated permissions
-                const updatedUser = await prisma.user.findUnique({
-                  where: { id: token.sub },
-                  include: {
-                    permissions: {
-                      include: {
-                        permission: true
-                      }
-                    }
-                  }
-                });
-                
-                if (updatedUser) {
-                  session.user.permissions = updatedUser.permissions.map(
-                    (up) => up.permission.name
-                  );
-                  session.user.isAdmin = updatedUser.permissions.some(
-                    (up) => up.permission.name === "ADMIN"
-                  );
-                  session.user.displayName = updatedUser.displayName;
-                }
-              } else {
-                // No unclaimed account found, set default permissions
-                session.user.permissions = [];
-                session.user.isAdmin = false;
-                session.user.displayName = userWithPermissions.displayName;
-              }
-            } else {
-              // User already has permissions or is already claimed
-              session.user.permissions = userWithPermissions.permissions.map(
-                (up) => up.permission.name
-              );
-              session.user.isAdmin = userWithPermissions.permissions.some(
-                (up) => up.permission.name === "ADMIN"
-              );
-              session.user.displayName = userWithPermissions.displayName;
-            }
+            // Load user permissions and info
+            session.user.permissions = userWithPermissions.permissions.map(
+              (up) => up.permission.name
+            );
+            session.user.isAdmin = userWithPermissions.permissions.some(
+              (up) => up.permission.name === "ADMIN"
+            );
+            session.user.displayName = userWithPermissions.displayName;
             
             console.log("✅ User permissions loaded:", session.user.permissions, "isAdmin:", session.user.isAdmin);
           } else {
