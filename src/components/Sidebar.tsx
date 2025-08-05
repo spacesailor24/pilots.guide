@@ -69,6 +69,7 @@ export default function Sidebar() {
         items: [
           { name: "Overview", href: "/tournaments" },
           { name: "Create Tournament", href: "/tournaments/create" },
+          { name: "Player Rankings", href: "/rankings" },
           { name: "Completed Tournaments", href: "/tournaments/completed" },
         ],
       },

@@ -56,6 +56,7 @@ model User {
   createdTournaments  Tournament[]        // Tournaments this user created
   tournamentPlayers   TournamentPlayer[]  // Tournament participations
   roundWins           Round[]             // Rounds this user won
+  playerRating        PlayerRating?       // Rating for matchmaking
 }
 
 model VerificationToken {
@@ -209,4 +210,18 @@ model Round {
   @@unique([matchId, roundNumber])
   @@index([matchId])
   @@index([winnerId])
+}
+
+// Player rating system for matchmaking
+model PlayerRating {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  mu          Float    @default(25.0)    // Skill mean (OpenSkill default)
+  sigma       Float    @default(8.333)   // Skill uncertainty (OpenSkill default)
+  gamesPlayed Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

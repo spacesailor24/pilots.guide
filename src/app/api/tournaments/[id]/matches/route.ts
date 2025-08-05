@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { generateMatches, MatchmakingOptions } from "@/lib/matchmaking";
 
 export async function POST(
   request: NextRequest,
@@ -17,6 +18,7 @@ export async function POST(
     }
 
     const { id: tournamentId } = await params;
+    const body = await request.json().catch(() => ({})); // Parse body if provided
 
     // Get the tournament and verify the user is the creator
     const tournament = await prisma.tournament.findUnique({
@@ -24,6 +26,16 @@ export async function POST(
       include: {
         matches: {
           orderBy: { createdAt: 'asc' }
+        },
+        players: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                displayName: true
+              }
+            }
+          }
         }
       }
     });
@@ -52,26 +64,99 @@ export async function POST(
       );
     }
 
-    // Generate match name based on existing matches
+    // Check if tournament has enough players
+    if (tournament.players.length < 2) {
+      return NextResponse.json(
+        { error: "Tournament needs at least 2 players to generate matches" },
+        { status: 400 }
+      );
+    }
+
+    // Parse matchmaking options from request body
+    const matchmakingOptions: MatchmakingOptions = {
+      teamSize: body.teamSize || 1, // Default to 1v1
+      teamsPerMatch: body.teamsPerMatch || 2,
+      entropyLevel: body.entropyLevel !== undefined ? body.entropyLevel : 0.3,
+      maxSkillGap: body.maxSkillGap || 5.0,
+      avoidRecentOpponents: body.avoidRecentOpponents !== false, // Default true
+      recentMatchLookback: body.recentMatchLookback || 3
+    };
+
+    // Generate matches using the improved matchmaking system
+    const matchmakingResult = await generateMatches(tournamentId, matchmakingOptions);
+
+    if (matchmakingResult.matches.length === 0) {
+      return NextResponse.json(
+        { 
+          error: "No matches could be generated",
+          details: {
+            algorithm: matchmakingResult.algorithm,
+            totalPlayers: matchmakingResult.totalPlayers,
+            unmatchedPlayers: matchmakingResult.unmatchedPlayers.length
+          }
+        },
+        { status: 400 }
+      );
+    }
+
+    // Create matches in database
+    const createdMatches = [];
     const matchCount = tournament.matches.length;
-    const matchName = matchCount === 0 
-      ? "Match 1" 
-      : `Match ${matchCount + 1}`;
 
-    // Create the new match
-    const newMatch = await prisma.match.create({
-      data: {
-        tournamentId: tournament.id,
-        name: matchName,
-        startTime: tournament.startTime, // Default to tournament start time
-        endTime: tournament.endTime, // Default to tournament end time
-      },
-      include: {
-        rounds: true,
+    for (let i = 0; i < matchmakingResult.matches.length; i++) {
+      const generatedMatch = matchmakingResult.matches[i];
+      const matchName = matchmakingResult.matches.length === 1 
+        ? `Match ${matchCount + 1}`
+        : `Match ${matchCount + 1 + i}`;
+
+      // Create the match
+      const newMatch = await prisma.match.create({
+        data: {
+          tournamentId: tournament.id,
+          name: matchName,
+          startTime: tournament.startTime,
+          endTime: tournament.endTime,
+          // Store matchmaking metadata in a JSON field if needed
+          // For now, we'll just create the match structure
+        },
+        include: {
+          rounds: true,
+        }
+      });
+
+      createdMatches.push({
+        ...newMatch,
+        matchmakingInfo: {
+          teams: generatedMatch.teams.map(team => ({
+            players: team.players.map(p => ({
+              id: p.id,
+              displayName: p.displayName,
+              ordinal: p.ordinal
+            }))
+          })),
+          skillDifference: generatedMatch.skillDifference,
+          averageSkill: generatedMatch.averageSkill,
+          confidence: generatedMatch.confidence,
+          drawProbability: generatedMatch.drawProbability
+        }
+      });
+    }
+
+    // Return the created matches with matchmaking information
+    return NextResponse.json({
+      matches: createdMatches,
+      matchmakingResult: {
+        algorithm: matchmakingResult.algorithm,
+        entropy: matchmakingResult.entropy,
+        totalPlayers: matchmakingResult.totalPlayers,
+        unmatchedPlayers: matchmakingResult.unmatchedPlayers.map(p => ({
+          id: p.id,
+          displayName: p.displayName,
+          ordinal: p.ordinal
+        })),
+        teamSize: matchmakingResult.teamSize
       }
-    });
-
-    return NextResponse.json(newMatch, { status: 201 });
+    }, { status: 201 });
   } catch (error) {
     console.error("Failed to generate match:", error);
     return NextResponse.json(

@@ -52,7 +52,18 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generatingMatch, setGeneratingMatch] = useState(false);
+  const [showMatchmakingOptions, setShowMatchmakingOptions] = useState(false);
+  const [matchmakingOptions, setMatchmakingOptions] = useState({
+    teamSize: 1,
+    teamsPerMatch: 2,
+    entropyLevel: 0.3,
+    maxSkillGap: 5.0,
+    avoidRecentOpponents: true,
+    recentMatchLookback: 3
+  });
   const [currentTournamentId, setCurrentTournamentId] = useState<string | null>(null);
+  const [showResultsModal, setShowResultsModal] = useState<string | null>(null);
+  const [submittingResults, setSubmittingResults] = useState(false);
 
   // Skeleton Loading Component
   const TournamentSkeleton = () => (
@@ -262,6 +273,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify(matchmakingOptions),
       });
 
       if (response.ok) {
@@ -280,6 +292,40 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
       alert("Failed to generate match. Please try again.");
     } finally {
       setGeneratingMatch(false);
+    }
+  };
+
+  const handleSubmitResults = async (matchId: string, results: { teamResults: { playerIds: string[]; placement: number }[] }) => {
+    setSubmittingResults(true);
+    try {
+      const response = await fetch(`/api/tournaments/${tournament?.id}/matches/${matchId}/results`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(results),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Match results submitted successfully! Updated ${result.updatedRatings.length} player ratings.`);
+        setShowResultsModal(null);
+        
+        // Refresh tournament data to show updated match status
+        const tournamentResponse = await fetch(`/api/tournaments/${tournament?.id}`);
+        if (tournamentResponse.ok) {
+          const updatedTournament = await tournamentResponse.json();
+          setTournament(updatedTournament);
+        }
+      } else {
+        const error = await response.json();
+        alert(`Failed to submit results: ${error.error}`);
+      }
+    } catch (error) {
+      console.error("Error submitting results:", error);
+      alert("Failed to submit results. Please try again.");
+    } finally {
+      setSubmittingResults(false);
     }
   };
 
@@ -402,13 +448,21 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
             </h2>
             {/* Only show Generate Match button for active tournaments and if user is the creator */}
             {isActive && session?.user?.id === tournament.creator.id && (
-              <button
-                onClick={handleGenerateNextMatch}
-                disabled={generatingMatch}
-                className="px-4 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {generatingMatch ? "Generating..." : "Generate Next Match"}
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleGenerateNextMatch}
+                  disabled={generatingMatch}
+                  className="px-4 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {generatingMatch ? "Generating..." : "Generate Next Match"}
+                </button>
+                <button
+                  onClick={() => setShowMatchmakingOptions(!showMatchmakingOptions)}
+                  className="px-3 py-2 bg-zinc-700 text-white text-sm rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 transition-colors"
+                >
+                  ⚙️ Options
+                </button>
+              </div>
             )}
           </div>
           
@@ -423,12 +477,23 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
                   <div key={match.id} className="bg-zinc-800 rounded-lg p-4 border border-gray-600">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-lg font-semibold text-white">{match.name}</h3>
-                      <div className={`px-2 py-1 rounded text-xs font-medium ${
-                        matchIsActive 
-                          ? "bg-green-900/20 text-green-400 border border-green-600/30"
-                          : "bg-gray-900/20 text-gray-400 border border-gray-600/30"
-                      }`}>
-                        {matchIsActive ? "Active" : "Completed"}
+                      <div className="flex items-center gap-3">
+                        <div className={`px-2 py-1 rounded text-xs font-medium ${
+                          matchIsActive 
+                            ? "bg-green-900/20 text-green-400 border border-green-600/30"
+                            : "bg-gray-900/20 text-gray-400 border border-gray-600/30"
+                        }`}>
+                          {matchIsActive ? "Active" : "Completed"}
+                        </div>
+                        {/* Submit Results button - only show for active matches and tournament creator */}
+                        {matchIsActive && session?.user?.id === tournament.creator.id && (
+                          <button
+                            onClick={() => setShowResultsModal(match.id)}
+                            className="px-3 py-1 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                          >
+                            Submit Results
+                          </button>
+                        )}
                       </div>
                     </div>
                     
@@ -473,6 +538,144 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
           )}
         </div>
 
+        {/* Matchmaking Options Panel */}
+        {showMatchmakingOptions && isActive && (session?.user as any)?.id === tournament.creator.id && (
+          <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-white">Matchmaking Options</h2>
+              <button
+                onClick={() => setShowMatchmakingOptions(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Team Size */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Team Size
+                </label>
+                <select
+                  value={matchmakingOptions.teamSize}
+                  onChange={(e) => setMatchmakingOptions(prev => ({ ...prev, teamSize: parseInt(e.target.value) }))}
+                  className="w-full px-3 py-2 bg-zinc-800 border border-red-600/30 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  <option value={1}>1v1</option>
+                  <option value={2}>2v2</option>
+                  <option value={3}>3v3</option>
+                  <option value={4}>4v4</option>
+                </select>
+                <p className="text-xs text-gray-400 mt-1">Players per team</p>
+              </div>
+
+              {/* Entropy Level */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Randomness ({(matchmakingOptions.entropyLevel * 100).toFixed(0)}%)
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={matchmakingOptions.entropyLevel}
+                  onChange={(e) => setMatchmakingOptions(prev => ({ ...prev, entropyLevel: parseFloat(e.target.value) }))}
+                  className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer slider"
+                />
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>Skill-based</span>
+                  <span>Random</span>
+                </div>
+              </div>
+
+              {/* Max Skill Gap */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Max Skill Gap ({matchmakingOptions.maxSkillGap})
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="15"
+                  step="0.5"
+                  value={matchmakingOptions.maxSkillGap}
+                  onChange={(e) => setMatchmakingOptions(prev => ({ ...prev, maxSkillGap: parseFloat(e.target.value) }))}
+                  className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer slider"
+                />
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>Tight</span>
+                  <span>Loose</span>
+                </div>
+              </div>
+
+              {/* Avoid Recent Opponents */}
+              <div>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={matchmakingOptions.avoidRecentOpponents}
+                    onChange={(e) => setMatchmakingOptions(prev => ({ ...prev, avoidRecentOpponents: e.target.checked }))}
+                    className="w-4 h-4 text-red-600 bg-zinc-800 border-red-600/30 rounded focus:ring-red-500"
+                  />
+                  <span className="text-white text-sm font-medium">Avoid Recent Opponents</span>
+                </label>
+                <p className="text-xs text-gray-400 mt-1">Prevent immediate rematches</p>
+              </div>
+
+              {/* Recent Match Lookback */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Lookback Rounds ({matchmakingOptions.recentMatchLookback})
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="1"
+                  value={matchmakingOptions.recentMatchLookback}
+                  onChange={(e) => setMatchmakingOptions(prev => ({ ...prev, recentMatchLookback: parseInt(e.target.value) }))}
+                  className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer slider"
+                  disabled={!matchmakingOptions.avoidRecentOpponents}
+                />
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>1</span>
+                  <span>10</span>
+                </div>
+              </div>
+
+              {/* Reset to Defaults */}
+              <div className="flex items-end">
+                <button
+                  onClick={() => setMatchmakingOptions({
+                    teamSize: 1,
+                    teamsPerMatch: 2,
+                    entropyLevel: 0.3,
+                    maxSkillGap: 5.0,
+                    avoidRecentOpponents: true,
+                    recentMatchLookback: 3
+                  })}
+                  className="px-4 py-2 bg-zinc-700 text-white text-sm rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 transition-colors"
+                >
+                  Reset to Defaults
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-6 p-4 bg-zinc-800 rounded-lg">
+              <h3 className="text-sm font-medium text-white mb-2">ℹ️ How It Works</h3>
+              <ul className="text-xs text-gray-400 space-y-1">
+                <li><strong>Team Size:</strong> Number of players per team (1v1, 2v2, etc.)</li>
+                <li><strong>Randomness:</strong> 0% = purely skill-based, 100% = completely random</li>
+                <li><strong>Max Skill Gap:</strong> Maximum allowed difference in player ratings</li>
+                <li><strong>Avoid Recent Opponents:</strong> Prevents players from facing same opponents repeatedly</li>
+                <li><strong>Lookback Rounds:</strong> How many recent rounds to check for opponent history</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
         {/* Tournament Timeline */}
         <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
           <h2 className="text-2xl font-semibold text-white mb-4">Timeline</h2>
@@ -509,7 +712,162 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
             )}
           </div>
         </div>
+
+        {/* Match Results Submission Modal */}
+        {showResultsModal && tournament && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-white">Submit Match Results</h2>
+                <button
+                  onClick={() => setShowResultsModal(null)}
+                  className="text-gray-400 hover:text-white"
+                  disabled={submittingResults}
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <MatchResultsForm
+                matchId={showResultsModal}
+                tournament={tournament}
+                onSubmit={handleSubmitResults}
+                onCancel={() => setShowResultsModal(null)}
+                isSubmitting={submittingResults}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </AppLayout>
+  );
+}
+
+// Match Results Form Component
+interface MatchResultsFormProps {
+  matchId: string;
+  tournament: Tournament;
+  onSubmit: (matchId: string, results: { teamResults: { playerIds: string[]; placement: number }[] }) => void;
+  onCancel: () => void;
+  isSubmitting: boolean;
+}
+
+function MatchResultsForm({ matchId, tournament, onSubmit, onCancel, isSubmitting }: MatchResultsFormProps) {
+  const [teamResults, setTeamResults] = useState<{ playerIds: string[]; placement: number }[]>([
+    { playerIds: [], placement: 1 }, // Winner
+    { playerIds: [], placement: 2 }  // Runner-up
+  ]);
+
+  const handlePlayerSelection = (teamIndex: number, playerId: string, isSelected: boolean) => {
+    setTeamResults(prev => {
+      const newResults = [...prev];
+      if (isSelected) {
+        // Add player to team
+        newResults[teamIndex].playerIds.push(playerId);
+      } else {
+        // Remove player from team
+        newResults[teamIndex].playerIds = newResults[teamIndex].playerIds.filter(id => id !== playerId);
+      }
+      return newResults;
+    });
+  };
+
+  const isPlayerSelected = (playerId: string) => {
+    return teamResults.some(team => team.playerIds.includes(playerId));
+  };
+
+  const canSubmit = teamResults.every(team => team.playerIds.length > 0) && !isSubmitting;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (canSubmit) {
+      onSubmit(matchId, { teamResults });
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="text-sm text-gray-400 mb-4">
+        Select players for each team based on match results. Each player can only be assigned to one team.
+      </div>
+
+      {teamResults.map((team, teamIndex) => (
+        <div key={teamIndex} className="space-y-3">
+          <h3 className="text-lg font-medium text-white">
+            {teamIndex === 0 ? "🥇 Winner" : teamIndex === 1 ? "🥈 Runner-up" : `${teamIndex + 1}${["", "", "rd", "th"][teamIndex] || "th"} Place`}
+          </h3>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {tournament.players.map((player) => {
+              const isSelected = team.playerIds.includes(player.user.id);
+              const isDisabled = !isSelected && isPlayerSelected(player.user.id);
+              
+              return (
+                <label
+                  key={player.user.id}
+                  className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    isSelected
+                      ? "bg-green-900/20 border-green-600/50"
+                      : isDisabled
+                      ? "bg-gray-800/50 border-gray-600/30 opacity-50 cursor-not-allowed"
+                      : "bg-zinc-800 border-gray-600/30 hover:border-gray-500"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    disabled={isDisabled || isSubmitting}
+                    onChange={(e) => handlePlayerSelection(teamIndex, player.user.id, e.target.checked)}
+                    className="w-4 h-4 text-green-600 bg-zinc-800 border-gray-600 rounded focus:ring-green-500"
+                  />
+                  
+                  {player.user.claimed && player.user.image ? (
+                    <img
+                      src={player.user.image}
+                      alt={player.user.displayName || "Player"}
+                      className="w-8 h-8 rounded-full"
+                    />
+                  ) : (
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      player.user.claimed ? 'bg-green-600' : 'bg-gray-600'
+                    }`}>
+                      <span className="text-xs font-medium text-white">
+                        {player.user.displayName?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  
+                  <span className={`font-medium ${isSelected ? "text-green-400" : "text-white"}`}>
+                    {player.user.displayName}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+          
+          <div className="text-xs text-gray-500">
+            Selected: {team.playerIds.length} player{team.playerIds.length !== 1 ? 's' : ''}
+          </div>
+        </div>
+      ))}
+
+      <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-700">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isSubmitting}
+          className="px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {isSubmitting ? "Submitting..." : "Submit Results"}
+        </button>
+      </div>
+    </form>
   );
 }
