@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import AppLayout from "@/components/AppLayout";
 import CustomDateTimePicker from "@/components/CustomDateTimePicker";
+import { useMatches } from "@/contexts/MatchesContext";
 
 interface Player {
   id: string;
@@ -17,6 +18,7 @@ interface Player {
 export default function CreateMatchPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { refreshMatches } = useMatches();
   const [step, setStep] = useState(1);
   const [matchName, setMatchName] = useState("");
   const [startDateTime, setStartDateTime] = useState<Date | null>(null);
@@ -113,6 +115,9 @@ export default function CreateMatchPage() {
         const match = await response.json();
         console.log("Match created successfully:", match);
         
+        // Refresh matches in context
+        await refreshMatches();
+        
         // Reset form
         setStep(1);
         setMatchName("");
@@ -121,8 +126,9 @@ export default function CreateMatchPage() {
         setSelectedPlayers([]);
         setSearchTerm("");
         
-        // You could redirect to a success page or show a success message here
+        // Show success message and redirect to match view
         alert("Match created successfully!");
+        router.push(`/matchmaking/match/${match.id}`);
       } else {
         const error = await response.json();
         console.error("Failed to create match:", error);
