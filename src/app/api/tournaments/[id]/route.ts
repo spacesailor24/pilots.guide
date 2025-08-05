@@ -67,9 +67,10 @@ export async function GET(
               },
             },
           },
-          orderBy: {
-            startTime: "asc",
-          },
+          orderBy: [
+            { generationRound: "asc" },
+            { startTime: "asc" }
+          ],
         },
       },
     });

@@ -181,19 +181,21 @@ model TournamentPlayer {
 
 // Individual matches within a tournament
 model Match {
-  id           String     @id @default(cuid())
-  tournamentId String
-  name         String     // e.g., "Semifinals Match 1", "Final"
-  startTime    DateTime
-  endTime      DateTime?
-  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  rounds       Round[]    // Multiple rounds per match
-  teams        MatchTeam[] // Teams participating in this match
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id              String     @id @default(cuid())
+  tournamentId    String
+  name            String     // e.g., "Semifinals Match 1", "Final"
+  generationRound Int        @default(1) // Which generation/round this match belongs to
+  startTime       DateTime
+  endTime         DateTime?
+  tournament      Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  rounds          Round[]    // Multiple rounds per match
+  teams           MatchTeam[] // Teams participating in this match
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   @@index([tournamentId])
   @@index([startTime])
+  @@index([tournamentId, generationRound])
 }
 
 model MatchTeam {

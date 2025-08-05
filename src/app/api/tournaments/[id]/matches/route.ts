@@ -25,6 +25,11 @@ export async function POST(
       where: { id: tournamentId },
       include: {
         matches: {
+          select: {
+            id: true,
+            name: true,
+            generationRound: true
+          },
           orderBy: { createdAt: 'asc' }
         },
         players: {
@@ -99,6 +104,12 @@ export async function POST(
       );
     }
 
+    // Determine the next generation round
+    const maxGenerationRound = tournament.matches.length > 0 
+      ? Math.max(...tournament.matches.map(m => m.generationRound || 1))
+      : 0;
+    const nextGenerationRound = maxGenerationRound + 1;
+
     // Create matches in database
     const createdMatches = [];
     const matchCount = tournament.matches.length;
@@ -114,6 +125,7 @@ export async function POST(
         data: {
           tournamentId: tournament.id,
           name: matchName,
+          generationRound: nextGenerationRound,
           startTime: tournament.startTime,
           endTime: tournament.endTime,
           teams: {
