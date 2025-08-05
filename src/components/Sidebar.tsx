@@ -100,11 +100,33 @@ export default function Sidebar() {
                 {section.section}
               </h3>
               <ul className="space-y-1">
-                {/* Render Overview first for Tournaments section */}
+                {/* Render Overview and Create Tournament first for Tournaments section */}
                 {section.section === "TOURNAMENTS" && (
                   <>
+                    {/* Overview */}
                     {section.items
                       .filter(item => item.name === "Overview")
+                      .map((item) => {
+                        const isActive = pathname === item.href;
+                        return (
+                          <li key={item.href}>
+                            <LinkWithTransition
+                              href={item.href}
+                              className={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
+                                isActive
+                                  ? "text-red-400 bg-red-900/20 font-medium border border-red-600/30"
+                                  : "text-gray-300 hover:bg-red-900/10 hover:text-red-400"
+                              }`}
+                            >
+                              {item.name}
+                            </LinkWithTransition>
+                          </li>
+                        );
+                      })}
+                    
+                    {/* Create Tournament */}
+                    {section.items
+                      .filter(item => item.name === "Create Tournament")
                       .map((item) => {
                         const isActive = pathname === item.href;
                         return (
@@ -180,7 +202,7 @@ export default function Sidebar() {
                 {/* Render remaining items (or all items for non-Tournaments sections) */}
                 {section.section === "TOURNAMENTS" 
                   ? section.items
-                      .filter(item => item.name !== "Overview")
+                      .filter(item => item.name !== "Overview" && item.name !== "Create Tournament")
                       .map((item) => {
                         const isActive = pathname === item.href;
                         return (

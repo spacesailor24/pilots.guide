@@ -126,8 +126,7 @@ export default function CreateTournamentPage() {
         setSelectedPlayers([]);
         setSearchTerm("");
         
-        // Show success message and redirect to tournament view
-        alert("Tournament created successfully!");
+        // Redirect to tournament view
         router.push(`/tournaments/${tournament.id}`);
       } else {
         const error = await response.json();

@@ -51,6 +51,85 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [generatingMatch, setGeneratingMatch] = useState(false);
+  const [currentTournamentId, setCurrentTournamentId] = useState<string | null>(null);
+
+  // Skeleton Loading Component
+  const TournamentSkeleton = () => (
+    <div className="space-y-6">
+      {/* Header Skeleton */}
+      <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
+        <div className="flex items-center justify-between mb-4">
+          <div className="h-10 bg-zinc-800 rounded animate-pulse w-80"></div>
+          <div className="h-6 bg-zinc-800 rounded-full animate-pulse w-20"></div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <div className="h-4 bg-zinc-800 rounded animate-pulse w-24"></div>
+            <div className="flex items-center space-x-2">
+              <div className="w-6 h-6 bg-zinc-800 rounded-full animate-pulse"></div>
+              <div className="h-4 bg-zinc-800 rounded animate-pulse w-32"></div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="h-4 bg-zinc-800 rounded animate-pulse w-20"></div>
+            <div className="h-4 bg-zinc-800 rounded animate-pulse w-40"></div>
+          </div>
+          <div className="space-y-2">
+            <div className="h-4 bg-zinc-800 rounded animate-pulse w-20"></div>
+            <div className="h-4 bg-zinc-800 rounded animate-pulse w-36"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Players Skeleton */}
+      <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
+        <div className="h-8 bg-zinc-800 rounded animate-pulse w-32 mb-4"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-zinc-800 rounded-lg p-4 border border-gray-600">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-zinc-700 rounded-full animate-pulse"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-zinc-700 rounded animate-pulse w-24"></div>
+                  <div className="h-3 bg-zinc-700 rounded animate-pulse w-16"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Matches Skeleton */}
+      <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
+        <div className="flex items-center justify-between mb-4">
+          <div className="h-8 bg-zinc-800 rounded animate-pulse w-24"></div>
+          <div className="h-10 bg-zinc-800 rounded animate-pulse w-40"></div>
+        </div>
+        <div className="text-center py-8">
+          <div className="h-4 bg-zinc-800 rounded animate-pulse w-48 mx-auto mb-4"></div>
+          <div className="h-3 bg-zinc-800 rounded animate-pulse w-80 mx-auto"></div>
+        </div>
+      </div>
+
+      {/* Timeline Skeleton */}
+      <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
+        <div className="h-8 bg-zinc-800 rounded animate-pulse w-24 mb-4"></div>
+        <div className="space-y-4">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="flex items-center space-x-4">
+              <div className="w-3 h-3 bg-zinc-800 rounded-full animate-pulse"></div>
+              <div className="space-y-2">
+                <div className="h-4 bg-zinc-800 rounded animate-pulse w-40"></div>
+                <div className="h-3 bg-zinc-800 rounded animate-pulse w-32"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   // Redirect if not admin
   useEffect(() => {
@@ -65,11 +144,27 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
       if (!session?.user?.isAdmin) return;
 
       const { id } = await params;
-      // First check if tournament exists in context to avoid unnecessary API call
+      
+      // If we're already showing this tournament, don't refetch
+      if (currentTournamentId === id && tournament && tournament.id === id) {
+        return;
+      }
+      
+      // Clear tournament data when switching to ensure skeleton shows during navigation
+      if (currentTournamentId !== id) {
+        setTournament(null);
+        setLoading(true);
+      }
+      
+      // Set the new tournament ID we're loading
+      setCurrentTournamentId(id);
+      setError(null);
+      
+      // First check if tournament exists in context to avoid loading flash
       const contextTournament = [...activeTournaments, ...completedTournaments].find(t => t.id === id);
       
       if (contextTournament) {
-        // Use tournament from context but still fetch full details since context might have limited data
+        // Use tournament from context immediately - no loading flash
         setTournament(contextTournament as Tournament);
         setLoading(false);
         
@@ -85,7 +180,8 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
           console.error("Failed to fetch full tournament details:", err);
         }
       } else {
-        // No tournament in context, fetch from API
+        // No tournament in context, show loading and fetch from API
+        setLoading(true);
         try {
           const response = await fetch(`/api/tournaments/${id}`);
           if (!response.ok) {
@@ -107,16 +203,20 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
     fetchTournament();
   }, [params, session?.user?.isAdmin, activeTournaments, completedTournaments]);
 
-  // Show loading while checking auth
-  if (status === "loading" || loading) {
+  // Show skeleton loading while checking auth or loading tournament data
+  if (status === "loading" || (loading && !tournament)) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading tournament...</p>
-          </div>
-        </div>
+        <TournamentSkeleton />
+      </AppLayout>
+    );
+  }
+
+  // Also show skeleton if we have tournament but it's not the right one (during navigation)
+  if (tournament && currentTournamentId && tournament.id !== currentTournamentId) {
+    return (
+      <AppLayout>
+        <TournamentSkeleton />
       </AppLayout>
     );
   }
@@ -151,6 +251,37 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
   const endDate = tournament.endTime ? new Date(tournament.endTime) : null;
   const now = new Date();
   const isActive = !endDate || endDate > now;
+
+  const handleGenerateNextMatch = async () => {
+    if (!tournament || generatingMatch) return;
+
+    setGeneratingMatch(true);
+    try {
+      const response = await fetch(`/api/tournaments/${tournament.id}/matches`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        // Refresh tournament data to show the new match
+        const tournamentResponse = await fetch(`/api/tournaments/${tournament.id}`);
+        if (tournamentResponse.ok) {
+          const updatedTournament = await tournamentResponse.json();
+          setTournament(updatedTournament);
+        }
+      } else {
+        const error = await response.json();
+        alert(`Failed to generate match: ${error.error}`);
+      }
+    } catch (error) {
+      console.error("Error generating match:", error);
+      alert("Failed to generate match. Please try again.");
+    } finally {
+      setGeneratingMatch(false);
+    }
+  };
 
   return (
     <AppLayout>
@@ -264,10 +395,24 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
         </div>
 
         {/* Tournament Matches */}
-        {tournament.matches && tournament.matches.length > 0 && (
-          <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
-            <h2 className="text-2xl font-semibold text-white mb-4">Matches</h2>
-            
+        <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-semibold text-white">
+              Matches {tournament.matches && tournament.matches.length > 0 && `(${tournament.matches.length})`}
+            </h2>
+            {/* Only show Generate Match button for active tournaments and if user is the creator */}
+            {isActive && session?.user?.id === tournament.creator.id && (
+              <button
+                onClick={handleGenerateNextMatch}
+                disabled={generatingMatch}
+                className="px-4 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {generatingMatch ? "Generating..." : "Generate Next Match"}
+              </button>
+            )}
+          </div>
+          
+          {tournament.matches && tournament.matches.length > 0 ? (
             <div className="space-y-4">
               {tournament.matches.map((match) => {
                 const matchStartDate = new Date(match.startTime);
@@ -316,8 +461,17 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
                 );
               })}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <p className="mb-4">No matches generated yet</p>
+              {isActive && session?.user?.id === tournament.creator.id && (
+                <p className="text-sm text-gray-400">
+                  Click "Generate Next Match" to create the first match for this tournament.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Tournament Timeline */}
         <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">

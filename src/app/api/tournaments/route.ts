@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
             userId: playerId,
           })),
         },
+        // Matches will be created dynamically using the generate match endpoint
       },
       include: {
         creator: {

@@ -367,7 +367,6 @@ async function main() {
   // Create sample tournaments
   const currentTime = new Date();
   const oneHourAgo = new Date(currentTime.getTime() - 60 * 60 * 1000);
-  const oneHourFromNow = new Date(currentTime.getTime() + 60 * 60 * 1000);
   const threeDaysFromNow = new Date(currentTime.getTime() + 3 * 24 * 60 * 60 * 1000);
   const oneDayAgo = new Date(currentTime.getTime() - 24 * 60 * 60 * 1000);
 
@@ -385,10 +384,10 @@ async function main() {
     // Find spacesai1or to be the tournament creator
     const spacesailorUser = tournamentPlayers.find(p => p.displayName === "spacesai1or") || tournamentPlayers[0];
 
-    // Create an active tournament
+    // Create an active tournament without pre-generated matches
     const activeTournament = await prisma.tournament.create({
       data: {
-        name: "Test Tournament Active",
+        name: "Winter Championship 2025",
         startTime: oneHourAgo,
         endTime: threeDaysFromNow,
         createdBy: spacesailorUser.id,
@@ -397,54 +396,14 @@ async function main() {
             userId: player.id,
           })),
         },
-        matches: {
-          create: [
-            {
-              name: "Semifinals Match 1",
-              startTime: oneHourAgo,
-              endTime: oneHourFromNow,
-              rounds: {
-                create: [
-                  {
-                    roundNumber: 1,
-                    startTime: oneHourAgo,
-                    endTime: new Date(oneHourAgo.getTime() + 20 * 60 * 1000),
-                    winnerId: tournamentPlayers[0].id,
-                  },
-                  {
-                    roundNumber: 2,
-                    startTime: new Date(oneHourAgo.getTime() + 25 * 60 * 1000),
-                    endTime: new Date(oneHourAgo.getTime() + 45 * 60 * 1000),
-                    winnerId: tournamentPlayers[1].id,
-                  },
-                  {
-                    roundNumber: 3,
-                    startTime: new Date(oneHourAgo.getTime() + 50 * 60 * 1000),
-                    endTime: oneHourFromNow,
-                    winnerId: tournamentPlayers[0].id,
-                  },
-                ],
-              },
-            },
-            {
-              name: "Semifinals Match 2",
-              startTime: new Date(currentTime.getTime() + 2 * 60 * 60 * 1000),
-              endTime: null, // Still to be played
-            },
-            {
-              name: "Grand Final",
-              startTime: new Date(currentTime.getTime() + 24 * 60 * 60 * 1000),
-              endTime: null, // Still to be played
-            },
-          ],
-        },
+        // Matches will be generated dynamically using the API
       },
     });
 
-    // Create a completed tournament
+    // Create a completed tournament with some matches to show example structure
     const completedTournament = await prisma.tournament.create({
       data: {
-        name: "Test Tournament Completed",
+        name: "Autumn Showdown 2024",
         startTime: new Date(currentTime.getTime() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
         endTime: oneDayAgo,
         createdBy: spacesailorUser.id,
@@ -456,7 +415,7 @@ async function main() {
         matches: {
           create: [
             {
-              name: "Semifinals Match 1",
+              name: "Match 1",
               startTime: new Date(currentTime.getTime() - 6 * 24 * 60 * 60 * 1000),
               endTime: new Date(currentTime.getTime() - 6 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
               rounds: {
@@ -483,7 +442,7 @@ async function main() {
               },
             },
             {
-              name: "Grand Final",
+              name: "Match 2",
               startTime: new Date(currentTime.getTime() - 2 * 24 * 60 * 60 * 1000),
               endTime: oneDayAgo,
               rounds: {
@@ -498,7 +457,7 @@ async function main() {
                     roundNumber: 2,
                     startTime: new Date(currentTime.getTime() - 2 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000),
                     endTime: oneDayAgo,
-                    winnerId: tournamentPlayers[1].id, // bjax wins!
+                    winnerId: tournamentPlayers[1].id, // Winner of tournament!
                   },
                 ],
               },
