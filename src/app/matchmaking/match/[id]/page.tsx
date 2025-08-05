@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import AppLayout from "@/components/AppLayout";
+import { useMatches } from "@/contexts/MatchesContext";
 
 interface MatchPlayer {
   id: string;
@@ -33,6 +34,7 @@ interface Match {
 export default function MatchViewPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { activeMatches, completedMatches } = useMatches();
   const [match, setMatch] = useState<Match | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,25 +51,47 @@ export default function MatchViewPage({ params }: { params: { id: string } }) {
     const fetchMatch = async () => {
       if (!session?.user?.isAdmin) return;
 
-      try {
-        const response = await fetch(`/api/matches/${params.id}`);
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error("Match not found");
-          }
-          throw new Error("Failed to fetch match");
-        }
-        const matchData = await response.json();
-        setMatch(matchData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
+      // First check if match exists in context to avoid unnecessary API call
+      const contextMatch = [...activeMatches, ...completedMatches].find(m => m.id === params.id);
+      
+      if (contextMatch) {
+        // Use match from context but still fetch full details since context might have limited data
+        setMatch(contextMatch as Match);
         setLoading(false);
+        
+        // Fetch full details in background to ensure we have all data
+        try {
+          const response = await fetch(`/api/matches/${params.id}`);
+          if (response.ok) {
+            const matchData = await response.json();
+            setMatch(matchData);
+          }
+        } catch (err) {
+          // Silently fail if we already have data from context
+          console.error("Failed to fetch full match details:", err);
+        }
+      } else {
+        // No match in context, fetch from API
+        try {
+          const response = await fetch(`/api/matches/${params.id}`);
+          if (!response.ok) {
+            if (response.status === 404) {
+              throw new Error("Match not found");
+            }
+            throw new Error("Failed to fetch match");
+          }
+          const matchData = await response.json();
+          setMatch(matchData);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "An error occurred");
+        } finally {
+          setLoading(false);
+        }
       }
     };
 
     fetchMatch();
-  }, [params.id, session?.user?.isAdmin]);
+  }, [params.id, session?.user?.isAdmin, activeMatches, completedMatches]);
 
   // Show loading while checking auth
   if (status === "loading" || loading) {

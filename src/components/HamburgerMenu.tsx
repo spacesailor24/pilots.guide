@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import UserMenu from "./UserMenu";
@@ -14,7 +14,17 @@ export default function HamburgerMenu() {
   const { data: session } = useSession();
   const { shipsWithBuilds } = useShips();
   const { activeMatches } = useMatches();
-  const [isActiveMatchesOpen, setIsActiveMatchesOpen] = useState(false);
+  
+  // Check if we're on an active match page
+  const isOnMatchPage = pathname.startsWith('/matchmaking/match/');
+  const [isActiveMatchesOpen, setIsActiveMatchesOpen] = useState(isOnMatchPage);
+  
+  // Update the expanded state when pathname changes
+  useEffect(() => {
+    if (isOnMatchPage) {
+      setIsActiveMatchesOpen(true);
+    }
+  }, [isOnMatchPage]);
   
   const isAdmin = (session?.user as any)?.isAdmin || false;
 
