@@ -49,6 +49,23 @@ export async function GET(
                 },
               },
             },
+            teams: {
+              include: {
+                players: {
+                  include: {
+                    user: {
+                      select: {
+                        id: true,
+                        username: true,
+                        displayName: true,
+                        image: true,
+                        claimed: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
           orderBy: {
             startTime: "asc",

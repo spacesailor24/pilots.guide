@@ -17,6 +17,23 @@ interface TournamentPlayer {
   };
 }
 
+interface MatchTeam {
+  id: string;
+  name: string;
+  placement: number | null;
+  players: Array<{
+    id: string;
+    userId: string;
+    user: {
+      id: string;
+      username: string | null;
+      displayName: string | null;
+      image: string | null;
+      claimed: boolean;
+    };
+  }>;
+}
+
 interface Tournament {
   id: string;
   name: string;
@@ -34,6 +51,7 @@ interface Tournament {
     name: string;
     startTime: string;
     endTime: string | null;
+    teams: MatchTeam[];
     rounds: Array<{
       id: string;
       roundNumber: number;
@@ -295,7 +313,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  const handleSubmitResults = async (matchId: string, results: { teamResults: { playerIds: string[]; placement: number }[] }) => {
+  const handleSubmitResults = async (matchId: string, winningTeamId: string) => {
     setSubmittingResults(true);
     try {
       const response = await fetch(`/api/tournaments/${tournament?.id}/matches/${matchId}/results`, {
@@ -303,7 +321,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(results),
+        body: JSON.stringify({ winningTeamId }),
       });
 
       if (response.ok) {
@@ -447,7 +465,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
               Matches {tournament.matches && tournament.matches.length > 0 && `(${tournament.matches.length})`}
             </h2>
             {/* Only show Generate Match button for active tournaments and if user is the creator */}
-            {isActive && session?.user?.id === tournament.creator.id && (
+            {isActive && (session?.user as any)?.id === tournament.creator.id && (
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleGenerateNextMatch}
@@ -485,8 +503,11 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
                         }`}>
                           {matchIsActive ? "Active" : "Completed"}
                         </div>
-                        {/* Submit Results button - only show for active matches and tournament creator */}
-                        {matchIsActive && session?.user?.id === tournament.creator.id && (
+                        {/* Submit Results button - only show for active matches without results and tournament creator */}
+                        {matchIsActive && 
+                         (session?.user as any)?.id === tournament.creator.id && 
+                         match.teams && 
+                         !match.teams.some(team => team.placement !== null) && (
                           <button
                             onClick={() => setShowResultsModal(match.id)}
                             className="px-3 py-1 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
@@ -503,6 +524,59 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
                         <span className="ml-4">End: {matchEndDate.toLocaleString()}</span>
                       )}
                     </div>
+
+                    {/* Display Teams */}
+                    {match.teams && match.teams.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="text-sm font-medium text-gray-300 mb-3">Teams</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {match.teams.map((team) => (
+                            <div key={team.id} className={`bg-zinc-700 rounded-lg p-3 border ${
+                              team.placement === 1 ? "border-yellow-500/50 bg-yellow-900/10" :
+                              team.placement === 2 ? "border-gray-400/50 bg-gray-900/10" :
+                              "border-zinc-600"
+                            }`}>
+                              <div className="flex items-center justify-between mb-2">
+                                <h5 className="text-white font-medium">{team.name}</h5>
+                                {team.placement && (
+                                  <span className={`text-xs px-2 py-1 rounded ${
+                                    team.placement === 1 ? "bg-yellow-500/20 text-yellow-300" :
+                                    team.placement === 2 ? "bg-gray-500/20 text-gray-300" :
+                                    ""
+                                  }`}>
+                                    {team.placement === 1 ? "🥇 Winner" : 
+                                     team.placement === 2 ? "🥈 Runner-up" : 
+                                     `${team.placement}${["", "", "rd", "th"][team.placement] || "th"} Place`}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="space-y-2">
+                                {team.players.map((participant) => (
+                                  <div key={participant.id} className="flex items-center space-x-2">
+                                    {participant.user.claimed && participant.user.image ? (
+                                      <img
+                                        src={participant.user.image}
+                                        alt={participant.user.displayName || "Player"}
+                                        className="w-6 h-6 rounded-full"
+                                      />
+                                    ) : (
+                                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-white ${
+                                        participant.user.claimed ? 'bg-green-600' : 'bg-gray-600'
+                                      }`}>
+                                        {participant.user.displayName?.charAt(0).toUpperCase()}
+                                      </div>
+                                    )}
+                                    <span className="text-sm text-white">
+                                      {participant.user.displayName}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     
                     {match.rounds && match.rounds.length > 0 && (
                       <div>
@@ -529,7 +603,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
           ) : (
             <div className="text-center py-8 text-gray-500">
               <p className="mb-4">No matches generated yet</p>
-              {isActive && session?.user?.id === tournament.creator.id && (
+              {isActive && (session?.user as any)?.id === tournament.creator.id && (
                 <p className="text-sm text-gray-400">
                   Click "Generate Next Match" to create the first match for this tournament.
                 </p>
@@ -747,109 +821,130 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
 interface MatchResultsFormProps {
   matchId: string;
   tournament: Tournament;
-  onSubmit: (matchId: string, results: { teamResults: { playerIds: string[]; placement: number }[] }) => void;
+  onSubmit: (matchId: string, winningTeamId: string) => void;
   onCancel: () => void;
   isSubmitting: boolean;
 }
 
 function MatchResultsForm({ matchId, tournament, onSubmit, onCancel, isSubmitting }: MatchResultsFormProps) {
-  const [teamResults, setTeamResults] = useState<{ playerIds: string[]; placement: number }[]>([
-    { playerIds: [], placement: 1 }, // Winner
-    { playerIds: [], placement: 2 }  // Runner-up
-  ]);
+  const [selectedWinningTeamId, setSelectedWinningTeamId] = useState<string>("");
 
-  const handlePlayerSelection = (teamIndex: number, playerId: string, isSelected: boolean) => {
-    setTeamResults(prev => {
-      const newResults = [...prev];
-      if (isSelected) {
-        // Add player to team
-        newResults[teamIndex].playerIds.push(playerId);
-      } else {
-        // Remove player from team
-        newResults[teamIndex].playerIds = newResults[teamIndex].playerIds.filter(id => id !== playerId);
-      }
-      return newResults;
-    });
-  };
+  // Find the match to get its teams
+  const match = tournament.matches?.find(m => m.id === matchId);
+  
+  if (!match || !match.teams || match.teams.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-400">
+        <p>No teams found for this match.</p>
+        <button
+          onClick={onCancel}
+          className="mt-4 px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
+        >
+          Close
+        </button>
+      </div>
+    );
+  }
 
-  const isPlayerSelected = (playerId: string) => {
-    return teamResults.some(team => team.playerIds.includes(playerId));
-  };
+  // Check if match already has results
+  const hasResults = match.teams.some(team => team.placement !== null);
+  if (hasResults) {
+    return (
+      <div className="text-center py-8 text-gray-400">
+        <p>Results have already been submitted for this match.</p>
+        <div className="mt-4 space-y-2">
+          {match.teams
+            .sort((a, b) => (a.placement || 999) - (b.placement || 999))
+            .map(team => (
+              <div key={team.id} className="text-white">
+                <span className={team.placement === 1 ? "text-yellow-400" : "text-gray-300"}>
+                  {team.placement === 1 ? "🥇" : "🥈"} {team.name}
+                </span>
+              </div>
+            ))}
+        </div>
+        <button
+          onClick={onCancel}
+          className="mt-4 px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
+        >
+          Close
+        </button>
+      </div>
+    );
+  }
 
-  const canSubmit = teamResults.every(team => team.playerIds.length > 0) && !isSubmitting;
+  const canSubmit = selectedWinningTeamId && !isSubmitting;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (canSubmit) {
-      onSubmit(matchId, { teamResults });
+      onSubmit(matchId, selectedWinningTeamId);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="text-sm text-gray-400 mb-4">
-        Select players for each team based on match results. Each player can only be assigned to one team.
+        Select the winning team for this match. Player ratings will be updated automatically.
       </div>
 
-      {teamResults.map((team, teamIndex) => (
-        <div key={teamIndex} className="space-y-3">
-          <h3 className="text-lg font-medium text-white">
-            {teamIndex === 0 ? "🥇 Winner" : teamIndex === 1 ? "🥈 Runner-up" : `${teamIndex + 1}${["", "", "rd", "th"][teamIndex] || "th"} Place`}
-          </h3>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {tournament.players.map((player) => {
-              const isSelected = team.playerIds.includes(player.user.id);
-              const isDisabled = !isSelected && isPlayerSelected(player.user.id);
+      <div className="space-y-3">
+        <h3 className="text-lg font-medium text-white">Select Winner</h3>
+        
+        <div className="space-y-3">
+          {match.teams.map((team) => (
+            <label
+              key={team.id}
+              className={`flex items-center space-x-4 p-4 rounded-lg border cursor-pointer transition-colors ${
+                selectedWinningTeamId === team.id
+                  ? "bg-yellow-900/20 border-yellow-600/50"
+                  : "bg-zinc-800 border-gray-600/30 hover:border-gray-500"
+              }`}
+            >
+              <input
+                type="radio"
+                name="winningTeam"
+                value={team.id}
+                checked={selectedWinningTeamId === team.id}
+                disabled={isSubmitting}
+                onChange={(e) => setSelectedWinningTeamId(e.target.value)}
+                className="w-5 h-5 text-yellow-600 bg-zinc-800 border-gray-600 focus:ring-yellow-500"
+              />
               
-              return (
-                <label
-                  key={player.user.id}
-                  className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                    isSelected
-                      ? "bg-green-900/20 border-green-600/50"
-                      : isDisabled
-                      ? "bg-gray-800/50 border-gray-600/30 opacity-50 cursor-not-allowed"
-                      : "bg-zinc-800 border-gray-600/30 hover:border-gray-500"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    disabled={isDisabled || isSubmitting}
-                    onChange={(e) => handlePlayerSelection(teamIndex, player.user.id, e.target.checked)}
-                    className="w-4 h-4 text-green-600 bg-zinc-800 border-gray-600 rounded focus:ring-green-500"
-                  />
-                  
-                  {player.user.claimed && player.user.image ? (
-                    <img
-                      src={player.user.image}
-                      alt={player.user.displayName || "Player"}
-                      className="w-8 h-8 rounded-full"
-                    />
-                  ) : (
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      player.user.claimed ? 'bg-green-600' : 'bg-gray-600'
-                    }`}>
-                      <span className="text-xs font-medium text-white">
-                        {player.user.displayName?.charAt(0).toUpperCase()}
+              <div className="flex-1">
+                <h4 className={`font-medium text-lg ${
+                  selectedWinningTeamId === team.id ? "text-yellow-400" : "text-white"
+                }`}>
+                  {team.name}
+                </h4>
+                
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {team.players.map((participant) => (
+                    <div key={participant.id} className="flex items-center space-x-2">
+                      {participant.user.claimed && participant.user.image ? (
+                        <img
+                          src={participant.user.image}
+                          alt={participant.user.displayName || "Player"}
+                          className="w-6 h-6 rounded-full"
+                        />
+                      ) : (
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-white ${
+                          participant.user.claimed ? 'bg-green-600' : 'bg-gray-600'
+                        }`}>
+                          {participant.user.displayName?.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <span className="text-sm text-gray-300">
+                        {participant.user.displayName}
                       </span>
                     </div>
-                  )}
-                  
-                  <span className={`font-medium ${isSelected ? "text-green-400" : "text-white"}`}>
-                    {player.user.displayName}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-          
-          <div className="text-xs text-gray-500">
-            Selected: {team.playerIds.length} player{team.playerIds.length !== 1 ? 's' : ''}
-          </div>
+                  ))}
+                </div>
+              </div>
+            </label>
+          ))}
         </div>
-      ))}
+      </div>
 
       <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-700">
         <button

@@ -109,18 +109,42 @@ export async function POST(
         ? `Match ${matchCount + 1}`
         : `Match ${matchCount + 1 + i}`;
 
-      // Create the match
+      // Create the match with teams
       const newMatch = await prisma.match.create({
         data: {
           tournamentId: tournament.id,
           name: matchName,
           startTime: tournament.startTime,
           endTime: tournament.endTime,
-          // Store matchmaking metadata in a JSON field if needed
-          // For now, we'll just create the match structure
+          teams: {
+            create: generatedMatch.teams.map((team, teamIndex) => ({
+              name: `Team ${String.fromCharCode(65 + teamIndex)}`, // Team A, Team B, etc.
+              players: {
+                create: team.players.map(player => ({
+                  userId: player.id
+                }))
+              }
+            }))
+          }
         },
         include: {
           rounds: true,
+          teams: {
+            include: {
+              players: {
+                include: {
+                  user: {
+                    select: {
+                      id: true,
+                      displayName: true,
+                      image: true,
+                      claimed: true
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       });
 

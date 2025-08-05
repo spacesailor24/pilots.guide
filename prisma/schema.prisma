@@ -57,6 +57,7 @@ model User {
   tournamentPlayers   TournamentPlayer[]  // Tournament participations
   roundWins           Round[]             // Rounds this user won
   playerRating        PlayerRating?       // Rating for matchmaking
+  matchParticipations MatchParticipant[]  // Match participations
 }
 
 model VerificationToken {
@@ -187,11 +188,36 @@ model Match {
   endTime      DateTime?
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   rounds       Round[]    // Multiple rounds per match
+  teams        MatchTeam[] // Teams participating in this match
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
   @@index([tournamentId])
   @@index([startTime])
+}
+
+model MatchTeam {
+  id       String            @id @default(cuid())
+  matchId  String
+  name     String            // e.g., "Team A", "Team B"
+  match    Match             @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  players  MatchParticipant[] // Players in this team
+  placement Int?             // Final placement (1st, 2nd, etc.) - null if match not completed
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  @@index([matchId])
+}
+
+model MatchParticipant {
+  id       String    @id @default(cuid())
+  teamId   String
+  userId   String
+  team     MatchTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
 }
 
 // Individual rounds within a match

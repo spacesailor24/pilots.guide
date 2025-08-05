@@ -51,49 +51,81 @@ export async function POST(
       );
     }
 
-    // Validate request body structure
-    if (!body.teamResults || !Array.isArray(body.teamResults)) {
+    // Validate request body structure - expecting winning team ID
+    if (!body.winningTeamId || typeof body.winningTeamId !== 'string') {
       return NextResponse.json(
-        { error: "Invalid request body. Expected teamResults array" },
+        { error: "Invalid request body. Expected winningTeamId string" },
         { status: 400 }
       );
     }
 
-    // Validate each team result
-    for (const team of body.teamResults) {
-      if (!Array.isArray(team.playerIds) || typeof team.placement !== 'number') {
-        return NextResponse.json(
-          { error: "Each team must have playerIds array and placement number" },
-          { status: 400 }
-        );
+    // Get match teams to validate the winning team belongs to this match
+    const matchTeams = await prisma.matchTeam.findMany({
+      where: { matchId },
+      include: {
+        players: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                displayName: true
+              }
+            }
+          }
+        }
       }
+    });
+
+    const winningTeam = matchTeams.find(team => team.id === body.winningTeamId);
+    if (!winningTeam) {
+      return NextResponse.json(
+        { error: "Invalid winning team ID" },
+        { status: 400 }
+      );
     }
+
+    // Update team placements in database
+    for (let i = 0; i < matchTeams.length; i++) {
+      const team = matchTeams[i];
+      const placement = team.id === body.winningTeamId ? 1 : 2; // Winner gets 1st, others get 2nd
+      
+      await prisma.matchTeam.update({
+        where: { id: team.id },
+        data: { placement }
+      });
+    }
+
+    // Create team results for rating system
+    const teamResults = matchTeams.map(team => ({
+      playerIds: team.players.map(p => p.userId),
+      placement: team.id === body.winningTeamId ? 1 : 2
+    }));
 
     // Update player ratings based on match results
     await updateRatingsAfterMatch({
       tournamentId,
       matchId,
-      teamResults: body.teamResults
+      teamResults
     });
 
-    // Optionally create a round with the results
+    // Create a round with the results
     if (body.createRound !== false) {
-      const winningTeam = body.teamResults.find((team: any) => team.placement === 1);
-      if (winningTeam && winningTeam.playerIds.length > 0) {
+      const firstWinningPlayer = winningTeam.players[0];
+      if (firstWinningPlayer) {
         await prisma.round.create({
           data: {
             matchId: matchId,
             roundNumber: 1, // Simple single round for now
             startTime: new Date(),
             endTime: new Date(),
-            winnerId: winningTeam.playerIds[0] // Use first player from winning team
+            winnerId: firstWinningPlayer.userId // Use first player from winning team
           }
         });
       }
     }
 
     // Return updated player ratings for the participants
-    const allPlayerIds = body.teamResults.flatMap((team: any) => team.playerIds);
+    const allPlayerIds = matchTeams.flatMap(team => team.players.map(p => p.userId));
     const updatedRatings = await prisma.playerRating.findMany({
       where: {
         userId: { in: allPlayerIds }
