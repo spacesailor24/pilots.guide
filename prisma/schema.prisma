@@ -42,17 +42,18 @@ model Session {
 }
 
 model User {
-  id               String           @id @default(cuid())
-  username         String?          @unique // Discord username
-  displayName      String?          // Name shown in app (e.g., "bjax", "MrOldMaan")
-  image            String?
-  claimed          Boolean          @default(false) // Track if user account is claimed
-  accounts         Account[]
-  sessions         Session[]
-  builds           Build[]
-  permissions      UserPermission[]
-  createdMatches   Match[]
-  matchPlayers     MatchPlayer[]
+  id                  String              @id @default(cuid())
+  username            String?             @unique // Discord username
+  displayName         String?             // Name shown in app (e.g., "bjax", "MrOldMaan")
+  image               String?
+  claimed             Boolean             @default(false) // Track if user account is claimed
+  accounts            Account[]
+  sessions            Session[]
+  builds              Build[]
+  permissions         UserPermission[]
+  createdTournaments  Tournament[]        // Tournaments this user created
+  tournamentPlayers   TournamentPlayer[]  // Tournament participations
+  roundWins           Round[]             // Rounds this user won
 }
 
 model VerificationToken {
@@ -145,30 +146,65 @@ model UserPermission {
   @@index([permissionId])
 }
 
-// Match system
-model Match {
-  id          String      @id @default(cuid())
+// Tournament system
+model Tournament {
+  id          String            @id @default(cuid())
   name        String
   startTime   DateTime
   endTime     DateTime?
   createdBy   String
-  creator     User        @relation(fields: [createdBy], references: [id])
-  players     MatchPlayer[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  creator     User             @relation(fields: [createdBy], references: [id])
+  players     TournamentPlayer[]
+  matches     Match[]          // Multiple matches per tournament
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   @@index([createdBy])
   @@index([startTime])
 }
 
-model MatchPlayer {
-  id       String @id @default(cuid())
-  matchId  String
-  userId   String
-  match    Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  user     User   @relation(fields: [userId], references: [id])
+model TournamentPlayer {
+  id           String     @id @default(cuid())
+  tournamentId String
+  userId       String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id])
 
-  @@unique([matchId, userId])
-  @@index([matchId])
+  @@unique([tournamentId, userId])
+  @@index([tournamentId])
   @@index([userId])
+}
+
+// Individual matches within a tournament
+model Match {
+  id           String     @id @default(cuid())
+  tournamentId String
+  name         String     // e.g., "Semifinals Match 1", "Final"
+  startTime    DateTime
+  endTime      DateTime?
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  rounds       Round[]    // Multiple rounds per match
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([tournamentId])
+  @@index([startTime])
+}
+
+// Individual rounds within a match
+model Round {
+  id        String   @id @default(cuid())
+  matchId   String
+  roundNumber Int    // Round 1, 2, 3, etc.
+  startTime DateTime
+  endTime   DateTime?
+  winnerId  String?  // Optional winner of this round
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  winner    User?    @relation(fields: [winnerId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([matchId, roundNumber])
+  @@index([matchId])
+  @@index([winnerId])
 }

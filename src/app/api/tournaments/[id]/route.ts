@@ -4,14 +4,15 @@ import { requireAdmin } from "@/lib/permissions";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check admin permission
     await requireAdmin();
 
-    const match = await prisma.match.findUnique({
-      where: { id: params.id },
+    const { id } = await params;
+    const tournament = await prisma.tournament.findUnique({
+      where: { id },
       include: {
         creator: {
           select: {
@@ -34,17 +35,36 @@ export async function GET(
             },
           },
         },
+        matches: {
+          include: {
+            rounds: {
+              include: {
+                winner: {
+                  select: {
+                    id: true,
+                    username: true,
+                    displayName: true,
+                    image: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            startTime: "asc",
+          },
+        },
       },
     });
 
-    if (!match) {
+    if (!tournament) {
       return NextResponse.json(
-        { error: "Match not found" },
+        { error: "Tournament not found" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(match);
+    return NextResponse.json(tournament);
   } catch (error: any) {
     if (error.message === "Admin access required") {
       return NextResponse.json(
@@ -53,9 +73,9 @@ export async function GET(
       );
     }
 
-    console.error("Failed to fetch match:", error);
+    console.error("Failed to fetch tournament:", error);
     return NextResponse.json(
-      { error: "Failed to fetch match" },
+      { error: "Failed to fetch tournament" },
       { status: 500 }
     );
   }

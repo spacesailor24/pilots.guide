@@ -9,8 +9,8 @@ export async function GET() {
 
     const now = new Date();
 
-    // Get active matches (haven't ended yet)
-    const activeMatches = await prisma.match.findMany({
+    // Get active tournaments (haven't ended yet)
+    const activeTournaments = await prisma.tournament.findMany({
       where: {
         OR: [
           { endTime: null }, // No end time specified
@@ -37,14 +37,19 @@ export async function GET() {
             },
           },
         },
+        matches: {
+          include: {
+            rounds: true,
+          },
+        },
       },
       orderBy: {
         startTime: "asc",
       },
     });
 
-    // Get completed matches (have ended)
-    const completedMatches = await prisma.match.findMany({
+    // Get completed tournaments (have ended)
+    const completedTournaments = await prisma.tournament.findMany({
       where: {
         endTime: {
           lte: now, // End time is in the past
@@ -70,6 +75,11 @@ export async function GET() {
             },
           },
         },
+        matches: {
+          include: {
+            rounds: true,
+          },
+        },
       },
       orderBy: {
         startTime: "desc", // Most recent first
@@ -77,8 +87,8 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      activeMatches,
-      completedMatches,
+      activeTournaments,
+      completedTournaments,
     });
   } catch (error: any) {
     if (error.message === "Admin access required") {
@@ -88,9 +98,9 @@ export async function GET() {
       );
     }
 
-    console.error("Failed to fetch matches by status:", error);
+    console.error("Failed to fetch tournaments by status:", error);
     return NextResponse.json(
-      { error: "Failed to fetch matches" },
+      { error: "Failed to fetch tournaments" },
       { status: 500 }
     );
   }

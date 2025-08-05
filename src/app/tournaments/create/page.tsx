@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import AppLayout from "@/components/AppLayout";
 import CustomDateTimePicker from "@/components/CustomDateTimePicker";
-import { useMatches } from "@/contexts/MatchesContext";
+import { useTournaments } from "@/contexts/TournamentsContext";
 
 interface Player {
   id: string;
@@ -15,12 +15,12 @@ interface Player {
   claimed: boolean;
 }
 
-export default function CreateMatchPage() {
+export default function CreateTournamentPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { refreshMatches } = useMatches();
+  const { refreshTournaments } = useTournaments();
   const [step, setStep] = useState(1);
-  const [matchName, setMatchName] = useState("");
+  const [tournamentName, setTournamentName] = useState("");
   const [startDateTime, setStartDateTime] = useState<Date | null>(null);
   const [endDateTime, setEndDateTime] = useState<Date | null>(null);
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
@@ -62,9 +62,9 @@ export default function CreateMatchPage() {
     );
   }, [players, searchTerm]);
 
-  const handleMatchNameSubmit = (e: React.FormEvent) => {
+  const handleTournamentNameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (matchName.trim()) {
+    if (tournamentName.trim()) {
       // Auto-populate start time with current time rounded to nearest 15 minutes
       if (!startDateTime) {
         const now = new Date();
@@ -98,13 +98,13 @@ export default function CreateMatchPage() {
 
     setCreating(true);
     try {
-      const response = await fetch("/api/matches", {
+      const response = await fetch("/api/tournaments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          matchName,
+          tournamentName,
           startDateTime: startDateTime.toISOString(),
           endDateTime: endDateTime?.toISOString() || null,
           selectedPlayers,
@@ -112,31 +112,31 @@ export default function CreateMatchPage() {
       });
 
       if (response.ok) {
-        const match = await response.json();
-        console.log("Match created successfully:", match);
+        const tournament = await response.json();
+        console.log("Tournament created successfully:", tournament);
         
-        // Refresh matches in context
-        await refreshMatches();
+        // Refresh tournaments in context
+        await refreshTournaments();
         
         // Reset form
         setStep(1);
-        setMatchName("");
+        setTournamentName("");
         setStartDateTime(null);
         setEndDateTime(null);
         setSelectedPlayers([]);
         setSearchTerm("");
         
-        // Show success message and redirect to match view
-        alert("Match created successfully!");
-        router.push(`/matchmaking/match/${match.id}`);
+        // Show success message and redirect to tournament view
+        alert("Tournament created successfully!");
+        router.push(`/tournaments/${tournament.id}`);
       } else {
         const error = await response.json();
-        console.error("Failed to create match:", error);
-        alert("Failed to create match. Please try again.");
+        console.error("Failed to create tournament:", error);
+        alert("Failed to create tournament. Please try again.");
       }
     } catch (error) {
-      console.error("Error creating match:", error);
-      alert("Failed to create match. Please try again.");
+      console.error("Error creating tournament:", error);
+      alert("Failed to create tournament. Please try again.");
     } finally {
       setCreating(false);
     }
@@ -167,15 +167,15 @@ export default function CreateMatchPage() {
         {/* Header */}
         <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg mb-6">
           <h1 className="text-4xl font-semibold text-white mb-3">
-            Create Match
+            Create Tournament
           </h1>
           <p className="text-gray-300">
-            Set up a new match by selecting players and configuring match
+            Set up a new tournament by selecting players and configuring tournament
             settings.
           </p>
         </div>
 
-        {/* Step 1: Match Name */}
+        {/* Step 1: Tournament Name */}
         <div
           className={`bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg mb-6 ${
             step === 1 ? "" : "opacity-75"
@@ -193,18 +193,18 @@ export default function CreateMatchPage() {
             >
               {step > 1 ? "✓" : "1"}
             </div>
-            <h2 className="text-xl font-semibold text-white">Name the Match</h2>
+            <h2 className="text-xl font-semibold text-white">Name the Tournament</h2>
           </div>
 
           {step === 1 ? (
-            <form onSubmit={handleMatchNameSubmit} className="space-y-4">
+            <form onSubmit={handleTournamentNameSubmit} className="space-y-4">
               <div>
                 <input
                   type="text"
-                  value={matchName}
-                  onChange={(e) => setMatchName(e.target.value)}
+                  value={tournamentName}
+                  onChange={(e) => setTournamentName(e.target.value)}
                   className="w-full px-4 py-3 bg-zinc-800 border border-red-600/30 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-lg"
-                  placeholder="Enter match name..."
+                  placeholder="Enter tournament name..."
                   required
                   autoFocus
                 />
@@ -212,7 +212,7 @@ export default function CreateMatchPage() {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  disabled={!matchName.trim()}
+                  disabled={!tournamentName.trim()}
                   className="px-6 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Continue
@@ -222,7 +222,7 @@ export default function CreateMatchPage() {
           ) : (
             <div className="text-gray-300">
               <p className="text-lg font-medium text-white">
-                Match Name: {matchName}
+                Tournament Name: {tournamentName}
               </p>
               <button
                 onClick={() => setStep(1)}
@@ -427,7 +427,7 @@ export default function CreateMatchPage() {
                   disabled={selectedPlayers.length === 0 || creating}
                   className="px-6 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {creating ? "Creating..." : "Create Match"}
+                  {creating ? "Creating..." : "Create Tournament"}
                 </button>
               </div>
             </form>

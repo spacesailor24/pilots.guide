@@ -5,25 +5,31 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import UserMenu from "./UserMenu";
 import { useShips } from "@/contexts/ShipsContext";
-import { useMatches } from "@/contexts/MatchesContext";
+import { useTournaments } from "@/contexts/TournamentsContext";
 import LinkWithTransition from "./LinkWithTransition";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { shipsWithBuilds } = useShips();
-  const { activeMatches } = useMatches();
+  const { activeTournaments } = useTournaments();
   
-  // Check if we're on an active match page
-  const isOnMatchPage = pathname.startsWith('/matchmaking/match/');
-  const [isActiveMatchesOpen, setIsActiveMatchesOpen] = useState(isOnMatchPage);
-  
-  // Update the expanded state when pathname changes
-  useEffect(() => {
-    if (isOnMatchPage) {
-      setIsActiveMatchesOpen(true);
+  // Active tournaments subsection state - persisted across navigation
+  const [isActiveTournamentsOpen, setIsActiveTournamentsOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('activeTournamentsOpen') === 'true';
     }
-  }, [isOnMatchPage]);
+    return false;
+  });
+
+  // Persist toggle state to localStorage
+  const toggleActiveTournaments = () => {
+    const newState = !isActiveTournamentsOpen;
+    setIsActiveTournamentsOpen(newState);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('activeTournamentsOpen', newState.toString());
+    }
+  };
   
   const isAdmin = (session?.user as any)?.isAdmin || false;
 
@@ -59,10 +65,11 @@ export default function Sidebar() {
     // Only show Match Making and Admin sections to admins
     ...(isAdmin ? [
       {
-        section: "MATCH MAKING",
+        section: "TOURNAMENTS",
         items: [
-          { name: "Create Match", href: "/matchmaking/create-match" },
-          { name: "Completed Matches", href: "/matchmaking/completed" },
+          { name: "Overview", href: "/tournaments" },
+          { name: "Create Tournament", href: "/tournaments/create" },
+          { name: "Completed Tournaments", href: "/tournaments/completed" },
         ],
       },
       {
@@ -93,11 +100,11 @@ export default function Sidebar() {
                 {section.section}
               </h3>
               <ul className="space-y-1">
-                {/* Render Create Match first for Match Making section */}
-                {section.section === "MATCH MAKING" && (
+                {/* Render Overview first for Tournaments section */}
+                {section.section === "TOURNAMENTS" && (
                   <>
                     {section.items
-                      .filter(item => item.name === "Create Match")
+                      .filter(item => item.name === "Overview")
                       .map((item) => {
                         const isActive = pathname === item.href;
                         return (
@@ -118,17 +125,17 @@ export default function Sidebar() {
                   </>
                 )}
 
-                {/* Active Matches Subsection for Match Making */}
-                {section.section === "MATCH MAKING" && isAdmin && activeMatches.length > 0 && (
+                {/* Active Tournaments Subsection for Tournaments */}
+                {section.section === "TOURNAMENTS" && isAdmin && activeTournaments.length > 0 && (
                   <li>
                     <button
-                      onClick={() => setIsActiveMatchesOpen(!isActiveMatchesOpen)}
+                      onClick={toggleActiveTournaments}
                       className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide hover:text-gray-300 transition-colors"
                     >
-                      <span>Active Matches</span>
+                      <span>Active Tournaments</span>
                       <svg
                         className={`w-4 h-4 transition-transform ${
-                          isActiveMatchesOpen ? "rotate-90" : ""
+                          isActiveTournamentsOpen ? "rotate-90" : ""
                         }`}
                         fill="none"
                         stroke="currentColor"
@@ -143,23 +150,23 @@ export default function Sidebar() {
                       </svg>
                     </button>
                     
-                    {isActiveMatchesOpen && (
+                    {isActiveTournamentsOpen && (
                       <ul className="space-y-1 ml-4">
-                        {activeMatches.map((match) => {
-                          const matchPath = `/matchmaking/match/${match.id}`;
-                          const isMatchActive = pathname === matchPath;
+                        {activeTournaments.map((tournament) => {
+                          const tournamentPath = `/tournaments/${tournament.id}`;
+                          const isTournamentActive = pathname === tournamentPath;
                           return (
-                            <li key={match.id}>
+                            <li key={tournament.id}>
                               <LinkWithTransition
-                                href={matchPath}
+                                href={tournamentPath}
                                 className={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
-                                  isMatchActive
+                                  isTournamentActive
                                     ? "text-red-400 bg-red-900/20 font-medium border border-red-600/30"
                                     : "text-gray-300 hover:bg-red-900/10 hover:text-red-400"
                                 }`}
                               >
-                                <span className="truncate" title={match.name}>
-                                  {match.name}
+                                <span className="truncate" title={tournament.name}>
+                                  {tournament.name}
                                 </span>
                               </LinkWithTransition>
                             </li>
@@ -170,10 +177,10 @@ export default function Sidebar() {
                   </li>
                 )}
 
-                {/* Render remaining items (or all items for non-Match Making sections) */}
-                {section.section === "MATCH MAKING" 
+                {/* Render remaining items (or all items for non-Tournaments sections) */}
+                {section.section === "TOURNAMENTS" 
                   ? section.items
-                      .filter(item => item.name !== "Create Match")
+                      .filter(item => item.name !== "Overview")
                       .map((item) => {
                         const isActive = pathname === item.href;
                         return (

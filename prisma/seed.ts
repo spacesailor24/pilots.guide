@@ -364,6 +364,151 @@ async function main() {
     }
   }
 
+  // Create sample tournaments
+  const currentTime = new Date();
+  const oneHourAgo = new Date(currentTime.getTime() - 60 * 60 * 1000);
+  const oneHourFromNow = new Date(currentTime.getTime() + 60 * 60 * 1000);
+  const threeDaysFromNow = new Date(currentTime.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const oneDayAgo = new Date(currentTime.getTime() - 24 * 60 * 60 * 1000);
+
+  // Get some players for tournaments
+  const tournamentPlayers = await prisma.user.findMany({
+    where: {
+      displayName: {
+        in: ["spacesai1or", "bjax", "MrOldMaan", "ChicagoTed", "Cypher-1", "Lobus"]
+      }
+    },
+    take: 6
+  });
+
+  if (tournamentPlayers.length >= 4) {
+    // Create an active tournament
+    const activeTournament = await prisma.tournament.create({
+      data: {
+        name: "Test Tournament Active",
+        startTime: oneHourAgo,
+        endTime: threeDaysFromNow,
+        createdBy: tournamentPlayers[0].id, // spacesai1or
+        players: {
+          create: tournamentPlayers.map(player => ({
+            userId: player.id,
+          })),
+        },
+        matches: {
+          create: [
+            {
+              name: "Semifinals Match 1",
+              startTime: oneHourAgo,
+              endTime: oneHourFromNow,
+              rounds: {
+                create: [
+                  {
+                    roundNumber: 1,
+                    startTime: oneHourAgo,
+                    endTime: new Date(oneHourAgo.getTime() + 20 * 60 * 1000),
+                    winnerId: tournamentPlayers[0].id,
+                  },
+                  {
+                    roundNumber: 2,
+                    startTime: new Date(oneHourAgo.getTime() + 25 * 60 * 1000),
+                    endTime: new Date(oneHourAgo.getTime() + 45 * 60 * 1000),
+                    winnerId: tournamentPlayers[1].id,
+                  },
+                  {
+                    roundNumber: 3,
+                    startTime: new Date(oneHourAgo.getTime() + 50 * 60 * 1000),
+                    endTime: oneHourFromNow,
+                    winnerId: tournamentPlayers[0].id,
+                  },
+                ],
+              },
+            },
+            {
+              name: "Semifinals Match 2",
+              startTime: new Date(currentTime.getTime() + 2 * 60 * 60 * 1000),
+              endTime: null, // Still to be played
+            },
+            {
+              name: "Grand Final",
+              startTime: new Date(currentTime.getTime() + 24 * 60 * 60 * 1000),
+              endTime: null, // Still to be played
+            },
+          ],
+        },
+      },
+    });
+
+    // Create a completed tournament
+    const completedTournament = await prisma.tournament.create({
+      data: {
+        name: "Test Tournament Completed",
+        startTime: new Date(currentTime.getTime() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+        endTime: oneDayAgo,
+        createdBy: tournamentPlayers[0].id, // spacesai1or
+        players: {
+          create: tournamentPlayers.slice(0, 4).map(player => ({
+            userId: player.id,
+          })),
+        },
+        matches: {
+          create: [
+            {
+              name: "Semifinals Match 1",
+              startTime: new Date(currentTime.getTime() - 6 * 24 * 60 * 60 * 1000),
+              endTime: new Date(currentTime.getTime() - 6 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
+              rounds: {
+                create: [
+                  {
+                    roundNumber: 1,
+                    startTime: new Date(currentTime.getTime() - 6 * 24 * 60 * 60 * 1000),
+                    endTime: new Date(currentTime.getTime() - 6 * 24 * 60 * 60 * 1000 + 20 * 60 * 1000),
+                    winnerId: tournamentPlayers[0].id,
+                  },
+                  {
+                    roundNumber: 2,
+                    startTime: new Date(currentTime.getTime() - 6 * 24 * 60 * 60 * 1000 + 25 * 60 * 1000),
+                    endTime: new Date(currentTime.getTime() - 6 * 24 * 60 * 60 * 1000 + 45 * 60 * 1000),
+                    winnerId: tournamentPlayers[1].id,
+                  },
+                  {
+                    roundNumber: 3,
+                    startTime: new Date(currentTime.getTime() - 6 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000),
+                    endTime: new Date(currentTime.getTime() - 6 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
+                    winnerId: tournamentPlayers[0].id,
+                  },
+                ],
+              },
+            },
+            {
+              name: "Grand Final",
+              startTime: new Date(currentTime.getTime() - 2 * 24 * 60 * 60 * 1000),
+              endTime: oneDayAgo,
+              rounds: {
+                create: [
+                  {
+                    roundNumber: 1,
+                    startTime: new Date(currentTime.getTime() - 2 * 24 * 60 * 60 * 1000),
+                    endTime: new Date(currentTime.getTime() - 2 * 24 * 60 * 60 * 1000 + 25 * 60 * 1000),
+                    winnerId: tournamentPlayers[1].id,
+                  },
+                  {
+                    roundNumber: 2,
+                    startTime: new Date(currentTime.getTime() - 2 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000),
+                    endTime: oneDayAgo,
+                    winnerId: tournamentPlayers[1].id, // bjax wins!
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    console.log("✅ Created tournament:", activeTournament.name);
+    console.log("✅ Created tournament:", completedTournament.name);
+  }
+
   console.log("🎉 Seeding completed!");
 }
 

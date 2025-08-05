@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import AppLayout from "@/components/AppLayout";
-import { useMatches } from "@/contexts/MatchesContext";
+import { useTournaments } from "@/contexts/TournamentsContext";
 import LinkWithTransition from "@/components/LinkWithTransition";
 
-interface Match {
+interface Tournament {
   id: string;
   name: string;
   startTime: string;
@@ -28,10 +28,10 @@ interface Match {
   }>;
 }
 
-export default function CompletedMatchesPage() {
+export default function CompletedTournamentsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { completedMatches, loading, error, refreshMatches } = useMatches();
+  const { completedTournaments, loading, error, refreshTournaments } = useTournaments();
 
   // Redirect if not admin
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function CompletedMatchesPage() {
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
             <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading completed matches...</p>
+            <p className="text-gray-400">Loading completed tournaments...</p>
           </div>
         </div>
       </AppLayout>
@@ -66,7 +66,7 @@ export default function CompletedMatchesPage() {
           <h1 className="text-2xl font-semibold text-red-400 mb-2">Error</h1>
           <p className="text-gray-300 mb-4">{error}</p>
           <button
-            onClick={refreshMatches}
+            onClick={refreshTournaments}
             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
           >
             Retry
@@ -83,67 +83,67 @@ export default function CompletedMatchesPage() {
         <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-4xl font-semibold text-white">
-              Completed Matches
+              Completed Tournaments
             </h1>
             <button
-              onClick={refreshMatches}
+              onClick={refreshTournaments}
               className="px-4 py-2 bg-zinc-700 text-gray-300 rounded-md hover:bg-zinc-600 transition-colors text-sm"
             >
               Refresh
             </button>
           </div>
           <p className="text-gray-300">
-            View all completed and cancelled matches.
+            View all completed and cancelled tournaments.
           </p>
         </div>
 
         {/* Matches List */}
         <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
           <h2 className="text-2xl font-semibold text-white mb-4">
-            {completedMatches.length > 0 
-              ? `${completedMatches.length} Completed Match${completedMatches.length !== 1 ? 'es' : ''}`
-              : "No Completed Matches"
+            {completedTournaments.length > 0 
+              ? `${completedTournaments.length} Completed Tournament${completedTournaments.length !== 1 ? 's' : ''}`
+              : "No Completed Tournaments"
             }
           </h2>
           
-          {completedMatches.length === 0 ? (
+          {completedTournaments.length === 0 ? (
             <div className="text-center py-12">
               <div className="mb-4">
                 <svg className="w-16 h-16 text-gray-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
-              <p className="text-gray-400 text-lg">No completed matches yet</p>
+              <p className="text-gray-400 text-lg">No completed tournaments yet</p>
               <p className="text-gray-500 text-sm mt-2">
-                Matches will appear here once they have ended or been cancelled.
+                Tournaments will appear here once they have ended or been cancelled.
               </p>
             </div>
           ) : (
             <div className="space-y-4">
-              {completedMatches.map((match) => {
-                const startDate = new Date(match.startTime);
-                const endDate = match.endTime ? new Date(match.endTime) : null;
+              {completedTournaments.map((tournament) => {
+                const startDate = new Date(tournament.startTime);
+                const endDate = tournament.endTime ? new Date(tournament.endTime) : null;
                 const duration = endDate && startDate 
                   ? Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60)) // hours
                   : null;
 
                 return (
                   <div
-                    key={match.id}
+                    key={tournament.id}
                     className="bg-zinc-800 rounded-lg p-6 border border-gray-600 hover:border-red-600/30 transition-colors"
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <h3 className="text-xl font-semibold text-white mb-2">
-                          {match.name}
+                          {tournament.name}
                         </h3>
                         <div className="flex items-center space-x-4 text-sm text-gray-400">
                           <span>
-                            Created by: {match.creator.displayName || match.creator.username}
+                            Created by: {tournament.creator.displayName || tournament.creator.username}
                           </span>
                           <span>•</span>
                           <span>
-                            {match.players.length} player{match.players.length !== 1 ? 's' : ''}
+                            {tournament.players.length} player{tournament.players.length !== 1 ? 's' : ''}
                           </span>
                           {duration && (
                             <>
@@ -157,7 +157,7 @@ export default function CompletedMatchesPage() {
                       </div>
                       
                       <LinkWithTransition
-                        href={`/matchmaking/match/${match.id}`}
+                        href={`/tournaments/${tournament.id}`}
                         className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
                       >
                         View Details
@@ -184,7 +184,7 @@ export default function CompletedMatchesPage() {
                     <div className="mt-4">
                       <span className="text-gray-400 text-sm">Players:</span>
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {match.players.slice(0, 6).map((player) => (
+                        {tournament.players.slice(0, 6).map((player) => (
                           <div
                             key={player.id}
                             className="flex items-center space-x-2 bg-zinc-700 px-3 py-1 rounded-full"
@@ -207,10 +207,10 @@ export default function CompletedMatchesPage() {
                             </span>
                           </div>
                         ))}
-                        {match.players.length > 6 && (
+                        {tournament.players.length > 6 && (
                           <div className="flex items-center justify-center bg-zinc-700 px-3 py-1 rounded-full">
                             <span className="text-gray-300 text-sm">
-                              +{match.players.length - 6} more
+                              +{tournament.players.length - 6} more
                             </span>
                           </div>
                         )}

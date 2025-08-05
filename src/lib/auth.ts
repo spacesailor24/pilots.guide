@@ -38,9 +38,10 @@ export const authOptions = {
         user.email = null;
       }
       
-      // Store the username for later use (PrismaAdapter will create the user after this callback)
+      // Store the username and displayName for later use (PrismaAdapter will create the user after this callback)
       if (account?.provider === "discord" && user.name) {
         user.username = user.name;
+        user.displayName = user.name; // Set displayName to match seeded accounts
       }
       
       console.log("✅ SignIn callback completed successfully");
@@ -125,8 +126,8 @@ export const authOptions = {
                     },
                   });
 
-                  // Transfer any match participations
-                  await tx.matchPlayer.updateMany({
+                  // Transfer any tournament participations
+                  await tx.tournamentPlayer.updateMany({
                     where: {
                       userId: unclaimedUser.id,
                     },

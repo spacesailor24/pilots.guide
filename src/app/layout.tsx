@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AuthSessionProvider from "@/components/SessionProvider";
 import { ShipsProvider } from "@/contexts/ShipsContext";
-import { MatchesProvider } from "@/contexts/MatchesContext";
+import { TournamentsProvider } from "@/contexts/TournamentsContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +32,7 @@ export default function RootLayout({
       >
         <AuthSessionProvider>
           <ShipsProvider>
-            <MatchesProvider>{children}</MatchesProvider>
+            <TournamentsProvider>{children}</TournamentsProvider>
           </ShipsProvider>
         </AuthSessionProvider>
       </body>

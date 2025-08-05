@@ -18,19 +18,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { matchName, startDateTime, endDateTime, selectedPlayers } = body;
+    const { tournamentName, startDateTime, endDateTime, selectedPlayers } = body;
 
-    if (!matchName || !startDateTime || !selectedPlayers?.length) {
+    if (!tournamentName || !startDateTime || !selectedPlayers?.length) {
       return NextResponse.json(
-        { error: "Missing required fields: matchName, startDateTime, selectedPlayers" },
+        { error: "Missing required fields: tournamentName, startDateTime, selectedPlayers" },
         { status: 400 }
       );
     }
 
-    // Create the match
-    const match = await prisma.match.create({
+    // Create the tournament
+    const tournament = await prisma.tournament.create({
       data: {
-        name: matchName,
+        name: tournamentName,
         startTime: new Date(startDateTime),
         endTime: endDateTime ? new Date(endDateTime) : null,
         createdBy: session.user.id,
@@ -60,10 +60,15 @@ export async function POST(request: NextRequest) {
             },
           },
         },
+        matches: {
+          include: {
+            rounds: true,
+          },
+        },
       },
     });
 
-    return NextResponse.json(match, { status: 201 });
+    return NextResponse.json(tournament, { status: 201 });
   } catch (error: any) {
     if (error.message === "Admin access required") {
       return NextResponse.json(
@@ -72,9 +77,9 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.error("Failed to create match:", error);
+    console.error("Failed to create tournament:", error);
     return NextResponse.json(
-      { error: "Failed to create match" },
+      { error: "Failed to create tournament" },
       { status: 500 }
     );
   }
@@ -82,7 +87,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const matches = await prisma.match.findMany({
+    const tournaments = await prisma.tournament.findMany({
       include: {
         creator: {
           select: {
@@ -103,17 +108,22 @@ export async function GET() {
             },
           },
         },
+        matches: {
+          include: {
+            rounds: true,
+          },
+        },
       },
       orderBy: {
         startTime: "desc",
       },
     });
 
-    return NextResponse.json(matches);
+    return NextResponse.json(tournaments);
   } catch (error) {
-    console.error("Failed to fetch matches:", error);
+    console.error("Failed to fetch tournaments:", error);
     return NextResponse.json(
-      { error: "Failed to fetch matches" },
+      { error: "Failed to fetch tournaments" },
       { status: 500 }
     );
   }
