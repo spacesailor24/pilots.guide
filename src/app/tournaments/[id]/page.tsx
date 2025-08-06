@@ -74,7 +74,7 @@ interface Tournament {
 export default function TournamentViewPage({ params }: { params: Promise<{ id: string }> }) {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { activeTournaments, completedTournaments } = useTournaments();
+  const { activeTournaments, completedTournaments, refreshTournaments } = useTournaments();
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -100,6 +100,8 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
     type: 'success' | 'error';
     message: string;
   }>>([]);
+  const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0);
+  const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
 
   // Skeleton Loading Component
   const TournamentSkeleton = () => (
@@ -352,7 +354,15 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
   const startDate = new Date(tournament.startTime);
   const endDate = tournament.endTime ? new Date(tournament.endTime) : null;
   const now = new Date();
-  const isActive = !endDate || endDate > now;
+  
+  // Different states for different actions
+  const isCompleted = !!tournament.endTime; // Tournament has been finalized
+  const canGenerateMatches = !endDate || endDate > now; // Can generate new matches if end time hasn't passed
+  const canSubmitResults = !isCompleted; // Can submit results until tournament is finalized
+  const canFinalizeTournament = !isCompleted; // Can finalize until actually finalized
+  
+  // For display purposes - show as "Active" if not completed, regardless of end time
+  const displayStatus = isCompleted ? "Completed" : "Active";
 
   const handleGenerateNextMatch = async () => {
     if (!tournament || generatingMatch) return;
@@ -466,6 +476,11 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
         const updatedTournament = await tournamentResponse.json();
         setTournament(updatedTournament);
       }
+      
+      // Trigger player stats refresh if any results were submitted successfully
+      if (successCount > 0) {
+        setStatsRefreshTrigger(prev => prev + 1);
+      }
     } catch (error) {
       console.error("Error submitting batch results:", error);
       showNotification('error', 'Failed to submit results. Please try again.');
@@ -476,13 +491,13 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
 
   const handleFinalizeTournament = async () => {
     if (!tournament || finalizingTournament) return;
+    setShowFinalizeConfirm(true);
+  };
 
-    const confirmed = window.confirm(
-      "Are you sure you want to finalize this tournament? This will mark it as completed and cannot be undone."
-    );
-    
-    if (!confirmed) return;
+  const confirmFinalizeTournament = async () => {
+    if (!tournament || finalizingTournament) return;
 
+    setShowFinalizeConfirm(false);
     setFinalizingTournament(true);
     try {
       const response = await fetch(`/api/tournaments/${tournament.id}/finalize`, {
@@ -494,15 +509,35 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
 
       if (response.ok) {
         showNotification('success', 'Tournament has been successfully finalized!');
-        // Refresh tournament data
+        // Refresh tournament data to reflect the new endTime
         const tournamentResponse = await fetch(`/api/tournaments/${tournament.id}`);
         if (tournamentResponse.ok) {
           const updatedTournament = await tournamentResponse.json();
           setTournament(updatedTournament);
+          // Also refresh the tournaments context to update lists
+          if (refreshTournaments) {
+            await refreshTournaments();
+          }
         }
       } else {
         const error = await response.json();
-        showNotification('error', `Failed to finalize tournament: ${error.error}`);
+        // Handle specific "already completed" error case
+        if (response.status === 400 && error.error === "Tournament is already completed") {
+          showNotification('error', 'This tournament has already been finalized. Refreshing data...');
+          // Force refresh the tournament data since there's a mismatch
+          setCurrentTournamentId(null); // Reset to force refetch
+          const tournamentResponse = await fetch(`/api/tournaments/${tournament.id}`);
+          if (tournamentResponse.ok) {
+            const updatedTournament = await tournamentResponse.json();
+            setTournament(updatedTournament);
+            // Also refresh the tournaments context
+            if (refreshTournaments) {
+              await refreshTournaments();
+            }
+          }
+        } else {
+          showNotification('error', `Failed to finalize tournament: ${error.error}`);
+        }
       }
     } catch (error) {
       console.error("Error finalizing tournament:", error);
@@ -546,9 +581,54 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
     </div>
   );
 
+  // Finalize Tournament Confirmation Modal
+  const FinalizeConfirmModal = () => {
+    if (!showFinalizeConfirm) return null;
+
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+          <div className="fixed inset-0 transition-opacity bg-black bg-opacity-75" onClick={() => setShowFinalizeConfirm(false)} />
+          
+          <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-zinc-900 border border-red-600 shadow-xl rounded-lg">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-white">Finalize Tournament</h3>
+            </div>
+            
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to finalize this tournament? This will mark it as completed and cannot be undone.
+            </p>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowFinalizeConfirm(false)}
+                className="px-4 py-2 text-gray-300 bg-zinc-700 hover:bg-zinc-600 rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmFinalizeTournament}
+                disabled={finalizingTournament}
+                className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {finalizingTournament ? "Finalizing..." : "Finalize Tournament"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <AppLayout>
       <NotificationContainer />
+      <FinalizeConfirmModal />
       <div className="space-y-6">
         {/* Header */}
         <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
@@ -556,12 +636,26 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
             <h1 className="text-4xl font-semibold text-white">
               {tournament.name}
             </h1>
-            <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-              isActive 
-                ? "bg-green-900/20 text-green-400 border border-green-600/30"
-                : "bg-gray-900/20 text-gray-400 border border-gray-600/30"
-            }`}>
-              {isActive ? "Active" : "Completed"}
+            <div className="flex items-center space-x-2">
+              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                !isCompleted 
+                  ? "bg-green-900/20 text-green-400 border border-green-600/30"
+                  : "bg-gray-900/20 text-gray-400 border border-gray-600/30"
+              }`}>
+                {displayStatus}
+              </div>
+              <button
+                onClick={() => {
+                  setCurrentTournamentId(null);
+                  fetchTournament();
+                }}
+                className="p-1 text-gray-400 hover:text-white transition-colors"
+                title="Refresh tournament data"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
             </div>
           </div>
           
@@ -645,7 +739,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
                 {tournament.players
                   .slice((currentPlayersPage - 1) * playersPerPage, currentPlayersPage * playersPerPage)
                   .map((player) => (
-                    <PlayerCard key={player.id} player={player} />
+                    <PlayerCard key={player.id} player={player} refreshTrigger={statsRefreshTrigger} />
                   ))}
               </div>
               
@@ -690,10 +784,10 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
               )}
             </div>
             {/* Action buttons for tournament creator */}
-            {isActive && userId === tournament.creator.id && (
+            {userId === tournament.creator.id && (
               <div className="flex items-center gap-3">
-                {/* Submit Results button - only show when there are selected winners */}
-                {Object.keys(selectedWinners).length > 0 && (
+                {/* Submit Results button - only show when there are selected winners and results can be submitted */}
+                {canSubmitResults && Object.keys(selectedWinners).length > 0 && (
                   <button
                     onClick={handleSubmitSelectedResults}
                     disabled={submittingResults}
@@ -702,19 +796,25 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
                     {submittingResults ? "Submitting..." : `Submit Results (${Object.keys(selectedWinners).length})`}
                   </button>
                 )}
-                <button
-                  onClick={handleGenerateNextMatch}
-                  disabled={generatingMatch}
-                  className="px-4 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {generatingMatch ? "Generating..." : "Generate Next Round"}
-                </button>
-                <button
-                  onClick={() => setShowMatchmakingOptions(!showMatchmakingOptions)}
-                  className="px-3 py-2 bg-zinc-700 text-white text-sm rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 transition-colors"
-                >
-                  ⚙️ Options
-                </button>
+                {/* Generate matches button - only show when matches can be generated */}
+                {canGenerateMatches && (
+                  <button
+                    onClick={handleGenerateNextMatch}
+                    disabled={generatingMatch}
+                    className="px-4 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {generatingMatch ? "Generating..." : "Generate Next Round"}
+                  </button>
+                )}
+                {/* Options button - only show when matches can be generated */}
+                {canGenerateMatches && (
+                  <button
+                    onClick={() => setShowMatchmakingOptions(!showMatchmakingOptions)}
+                    className="px-3 py-2 bg-zinc-700 text-white text-sm rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 transition-colors"
+                  >
+                    ⚙️ Options
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -726,7 +826,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
                 const matchEndDate = match.endTime ? new Date(match.endTime) : null;
                 const matchIsActive = !matchEndDate || matchEndDate > new Date();
                 const hasResults = match.teams && match.teams.some(team => team.placement !== null);
-                const canSubmitResults = matchIsActive && userId === tournament.creator.id && !hasResults;
+                const canSubmitMatchResults = !isCompleted && userId === tournament.creator.id && !hasResults;
                 const selectedWinner = selectedWinners[match.id];
                 
                 return (
@@ -762,7 +862,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
                       <div className="mb-4">
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="text-sm font-medium text-gray-300">Teams</h4>
-                          {canSubmitResults && (
+                          {canSubmitMatchResults && (
                             <span className="text-xs text-gray-400">Click teams to select winners, then use "Submit Results" button</span>
                           )}
                         </div>
@@ -771,7 +871,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
                             const isWinner = team.placement === 1;
                             const isRunnerUp = team.placement === 2;
                             const isSelected = selectedWinner === team.id;
-                            const isClickable = canSubmitResults;
+                            const isClickable = canSubmitMatchResults;
                             
                             return (
                               <div 
@@ -814,7 +914,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
                                 </div>
                                 <div className="space-y-2">
                                   {team.players.map((participant) => (
-                                    <MatchPlayerCard key={participant.id} participant={participant} />
+                                    <MatchPlayerCard key={participant.id} participant={participant} refreshTrigger={statsRefreshTrigger} />
                                   ))}
                                 </div>
                               </div>
@@ -830,7 +930,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
           ) : (
             <div className="text-center py-8 text-gray-500">
               <p className="mb-4">{totalRounds === 0 ? "No matches generated yet" : `No matches in Round ${currentRound}`}</p>
-              {isActive && userId === tournament.creator.id && (
+              {canGenerateMatches && userId === tournament.creator.id && (
                 <p className="text-sm text-gray-400">
                   {totalRounds === 0 
                     ? "Click \"Generate Next Round\" to create the first round of matches."
@@ -843,7 +943,7 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
         </div>
 
         {/* Matchmaking Options Panel */}
-        {showMatchmakingOptions && isActive && userId === tournament.creator.id && (
+        {showMatchmakingOptions && canGenerateMatches && userId === tournament.creator.id && (
           <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-white">Matchmaking Options</h2>
@@ -986,12 +1086,12 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
             <div>
               <h2 className="text-2xl font-semibold text-white mb-2">Tournament Status</h2>
               <p className="text-gray-400">
-                {isActive ? "Tournament is currently active" : "Tournament has been completed"}
+                {!isCompleted ? "Tournament is currently active" : "Tournament has been completed"}
               </p>
             </div>
             
-            {/* Finalize Tournament button - only show for active tournaments and if user is the creator */}
-            {isActive && userId === tournament.creator.id && (
+            {/* Finalize Tournament button - only show for tournaments that can be finalized and if user is the creator */}
+            {canFinalizeTournament && userId === tournament.creator.id && (
               <button
                 onClick={handleFinalizeTournament}
                 disabled={finalizingTournament}
@@ -1011,14 +1111,16 @@ export default function TournamentViewPage({ params }: { params: Promise<{ id: s
 // Player Card Component with Stats
 interface PlayerCardProps {
   player: TournamentPlayer;
+  refreshTrigger?: number; // Used to trigger stats refresh
 }
 
-function PlayerCard({ player }: PlayerCardProps) {
+function PlayerCard({ player, refreshTrigger }: PlayerCardProps) {
   const [stats, setStats] = useState<PlayerStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
+      setLoading(true);
       try {
         const response = await fetch(`/api/players/rankings`, {
           method: 'POST',
@@ -1037,7 +1139,7 @@ function PlayerCard({ player }: PlayerCardProps) {
     };
 
     fetchStats();
-  }, [player.user.id]);
+  }, [player.user.id, refreshTrigger]);
 
   return (
     <div className="bg-zinc-800 rounded-lg p-3 border border-gray-600 hover:border-gray-500 transition-colors">
@@ -1117,9 +1219,10 @@ interface MatchPlayerCardProps {
       claimed: boolean;
     };
   };
+  refreshTrigger?: number;
 }
 
-function MatchPlayerCard({ participant }: MatchPlayerCardProps) {
+function MatchPlayerCard({ participant, refreshTrigger }: MatchPlayerCardProps) {
   const [stats, setStats] = useState<PlayerStats | null>(null);
 
   useEffect(() => {
@@ -1140,7 +1243,7 @@ function MatchPlayerCard({ participant }: MatchPlayerCardProps) {
     };
 
     fetchStats();
-  }, [participant.userId]);
+  }, [participant.userId, refreshTrigger]);
 
   return (
     <div className="flex items-center justify-between">

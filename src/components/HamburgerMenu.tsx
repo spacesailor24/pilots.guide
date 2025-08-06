@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import UserMenu from "./UserMenu";
 import { useShips } from "@/contexts/ShipsContext";
 import { useTournaments } from "@/contexts/TournamentsContext";
@@ -124,12 +125,21 @@ export default function HamburgerMenu() {
         <div className="flex flex-col h-full">
           {/* Logo/Brand */}
           <div className="p-4 mt-16">
-            <h1 className="text-lg font-semibold text-red-500">
-              <LinkWithTransition href="/welcome">pilots.guide</LinkWithTransition>
-            </h1>
-            <p className="text-sm text-gray-400">
-              The Pilot's Guide to the 'Verse
-            </p>
+            <LinkWithTransition href="/welcome" className="block">
+              <div className="flex items-center space-x-3">
+                <Image
+                  src="/images/spacebook_logo.png"
+                  alt="Spacebook Logo"
+                  width={48}
+                  height={48}
+                  className="w-12 h-12"
+                />
+                <div>
+                  <h1 className="text-lg font-semibold text-red-500">pilots.guide</h1>
+                  <p className="text-sm text-gray-400">The Pilot's Guide to the 'Verse</p>
+                </div>
+              </div>
+            </LinkWithTransition>
           </div>
 
           {/* Navigation */}
