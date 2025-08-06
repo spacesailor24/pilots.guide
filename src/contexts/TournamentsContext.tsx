@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { useSession } from "next-auth/react";
 
 interface Tournament {
   id: string;
@@ -49,7 +48,6 @@ interface TournamentsContextType {
 const TournamentsContext = createContext<TournamentsContextType | undefined>(undefined);
 
 export function TournamentsProvider({ children }: { children: React.ReactNode }) {
-  const { data: session } = useSession();
   const [activeTournaments, setActiveTournaments] = useState<Tournament[]>([]);
   const [completedTournaments, setCompletedTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(false);

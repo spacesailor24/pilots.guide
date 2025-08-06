@@ -28,6 +28,9 @@ export default function CreateTournamentPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [players, setPlayers] = useState<Player[]>([]);
   const [creating, setCreating] = useState(false);
+  const [creatingPlayer, setCreatingPlayer] = useState(false);
+  const [newPlayerName, setNewPlayerName] = useState("");
+  const [showAddPlayerModal, setShowAddPlayerModal] = useState(false);
 
   // Redirect if not admin
   useEffect(() => {
@@ -92,6 +95,58 @@ export default function CreateTournamentPage() {
         ? prev.filter((id) => id !== playerId)
         : [...prev, playerId]
     );
+  };
+
+  const handleAddNewPlayer = async () => {
+    if (!newPlayerName.trim()) return;
+    
+    setCreatingPlayer(true);
+    try {
+      const response = await fetch("/api/players", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          displayName: newPlayerName.trim(),
+          claimed: false
+        }),
+      });
+
+      if (response.ok) {
+        const newPlayer = await response.json();
+        
+        // Add the new player to the players list
+        setPlayers(prev => [...prev, newPlayer]);
+        
+        // Auto-select the new player
+        setSelectedPlayers(prev => [...prev, newPlayer.id]);
+        
+        // Reset form and close modal
+        setNewPlayerName("");
+        setShowAddPlayerModal(false);
+        setSearchTerm(""); // Clear search to show all players including the new one
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to create player:", errorData);
+        
+        if (response.status === 409) {
+          alert("A player with this name already exists. Please try a different name.");
+        } else {
+          alert(errorData.error || "Failed to create player. Please try again.");
+        }
+      }
+    } catch (error) {
+      console.error("Error creating player:", error);
+      alert("Failed to create player. Please try again.");
+    } finally {
+      setCreatingPlayer(false);
+    }
+  };
+
+  const openAddPlayerModal = () => {
+    setNewPlayerName(searchTerm); // Pre-fill with current search term
+    setShowAddPlayerModal(true);
   };
 
   const handleFinalSubmit = async (e: React.FormEvent) => {
@@ -375,8 +430,18 @@ export default function CreateTournamentPage() {
               {/* Player Selection Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto p-4 bg-zinc-800 rounded-lg border border-red-600/30">
                 {filteredPlayers.length === 0 ? (
-                  <div className="col-span-full text-center text-gray-400 py-8">
-                    No players found matching "{searchTerm}"
+                  <div className="col-span-full text-center py-8">
+                    <p className="text-gray-400 mb-4">
+                      No players found matching "{searchTerm}"
+                    </p>
+                    {searchTerm.trim() && (
+                      <button
+                        onClick={openAddPlayerModal}
+                        className="px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-zinc-800 transition-colors"
+                      >
+                        Add "{searchTerm}" as new player
+                      </button>
+                    )}
                   </div>
                 ) : (
                   filteredPlayers.map((player) => {
@@ -423,6 +488,60 @@ export default function CreateTournamentPage() {
                   })
                 )}
               </div>
+
+              {/* Add Player Modal */}
+              {showAddPlayerModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="relative bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg max-w-md w-full mx-4 z-10">
+                    <h3 className="text-xl font-semibold text-white mb-4">
+                      Add New Player
+                    </h3>
+                    <p className="text-gray-300 mb-4">
+                      This will create a new unclaimed player profile that can be claimed later.
+                    </p>
+                    
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-white mb-2">
+                        Player Name
+                      </label>
+                      <input
+                        type="text"
+                        value={newPlayerName}
+                        onChange={(e) => setNewPlayerName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && newPlayerName.trim() && !creatingPlayer) {
+                            handleAddNewPlayer();
+                          }
+                        }}
+                        className="w-full px-4 py-2 bg-zinc-800 border border-red-600/30 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        placeholder="Enter player name..."
+                        autoFocus
+                        maxLength={50}
+                      />
+                    </div>
+                    
+                    <div className="flex justify-end space-x-3">
+                      <button
+                        onClick={() => {
+                          setShowAddPlayerModal(false);
+                          setNewPlayerName("");
+                        }}
+                        className="px-4 py-2 bg-gray-600 text-white font-medium rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+                        disabled={creatingPlayer}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleAddNewPlayer}
+                        disabled={!newPlayerName.trim() || creatingPlayer}
+                        className="px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {creatingPlayer ? "Creating..." : "Add Player"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Submit Button */}
               <div className="flex justify-end">
