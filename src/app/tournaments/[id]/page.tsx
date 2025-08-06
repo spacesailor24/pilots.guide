@@ -116,6 +116,25 @@ export default function TournamentViewPage({
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
   const [playerStats, setPlayerStats] = useState<Map<string, PlayerStats>>(new Map());
   const [statsLoading, setStatsLoading] = useState(true);
+  
+  // Player management states
+  const [playerSearchTerm, setPlayerSearchTerm] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [managingPlayer, setManagingPlayer] = useState(false);
+  const [showAddPlayerModal, setShowAddPlayerModal] = useState(false);
+  const [newPlayerName, setNewPlayerName] = useState("");
+  const [availablePlayers, setAvailablePlayers] = useState<Array<{
+    id: string;
+    displayName: string | null;
+    image: string | null;
+    claimed: boolean;
+  }>>([]);
+  const [currentPlayers, setCurrentPlayers] = useState<Array<{
+    id: string;
+    displayName: string | null;
+    image: string | null;
+    claimed: boolean;
+  }>>([]);
 
   // Skeleton Loading Component
   const TournamentSkeleton = () => (
@@ -385,6 +404,157 @@ export default function TournamentViewPage({
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
+  // Player management functions - Must be before any early returns
+  const searchPlayers = useCallback(async (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setAvailablePlayers([]);
+      setCurrentPlayers([]);
+      return;
+    }
+    
+    setSearchLoading(true);
+    try {
+      // Search for players not in tournament
+      const response = await fetch('/api/players');
+      if (response.ok) {
+        const players = await response.json();
+        const available = players.filter((player: { id: string; displayName: string | null }) => 
+          player.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) &&
+          !tournament?.players.some(tp => tp.user.id === player.id)
+        );
+        setAvailablePlayers(available);
+      }
+      
+      // Search current tournament players
+      const current = tournament?.players.filter(tp => 
+        tp.user.displayName?.toLowerCase().includes(searchTerm.toLowerCase())
+      ).map(tp => ({
+        id: tp.user.id,
+        displayName: tp.user.displayName,
+        image: tp.user.image,
+        claimed: tp.user.claimed
+      })) || [];
+      setCurrentPlayers(current);
+    } catch (error) {
+      console.error('Failed to search players:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, [tournament?.players]);
+
+  const removePlayerFromTournament = async (playerId: string, playerName: string) => {
+    if (!tournament || managingPlayer) return;
+    
+    setManagingPlayer(true);
+    try {
+      const response = await fetch(`/api/tournaments/${tournament.id}/players?playerId=${playerId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        const updatedTournament = await response.json();
+        setTournament(updatedTournament);
+        showNotification('success', `${playerName} has been removed from the tournament`);
+      } else {
+        const errorData = await response.json();
+        showNotification('error', errorData.error || 'Failed to remove player');
+      }
+    } catch (error) {
+      console.error('Error removing player:', error);
+      showNotification('error', 'Failed to remove player from tournament');
+    } finally {
+      setManagingPlayer(false);
+    }
+  };
+
+  const addPlayerToTournament = async (playerId: string, playerName: string) => {
+    if (!tournament || managingPlayer) return;
+    
+    setManagingPlayer(true);
+    try {
+      const response = await fetch(`/api/tournaments/${tournament.id}/players`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ playerId }),
+      });
+
+      if (response.ok) {
+        const updatedTournament = await response.json();
+        setTournament(updatedTournament);
+        showNotification('success', `${playerName} has been added to the tournament`);
+        setPlayerSearchTerm('');
+        setAvailablePlayers([]);
+        setCurrentPlayers([]);
+      } else {
+        const errorData = await response.json();
+        showNotification('error', errorData.error || 'Failed to add player');
+      }
+    } catch (error) {
+      console.error('Error adding player:', error);
+      showNotification('error', 'Failed to add player to tournament');
+    } finally {
+      setManagingPlayer(false);
+    }
+  };
+
+  const createAndAddPlayer = async () => {
+    if (!tournament || !newPlayerName.trim() || managingPlayer) return;
+    
+    setManagingPlayer(true);
+    try {
+      const response = await fetch(`/api/tournaments/${tournament.id}/players`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          createPlayer: {
+            displayName: newPlayerName.trim(),
+          }
+        }),
+      });
+
+      if (response.ok) {
+        const updatedTournament = await response.json();
+        setTournament(updatedTournament);
+        showNotification('success', `${newPlayerName} has been created and added to the tournament`);
+        setNewPlayerName('');
+        setShowAddPlayerModal(false);
+        setPlayerSearchTerm('');
+        setAvailablePlayers([]);
+        setCurrentPlayers([]);
+      } else {
+        const errorData = await response.json();
+        if (response.status === 409) {
+          showNotification('error', 'A player with this name already exists. Please try a different name.');
+        } else {
+          showNotification('error', errorData.error || 'Failed to create player');
+        }
+      }
+    } catch (error) {
+      console.error('Error creating player:', error);
+      showNotification('error', 'Failed to create and add player');
+    } finally {
+      setManagingPlayer(false);
+    }
+  };
+
+  // Player search effect - Must be before any early returns
+  useEffect(() => {
+    if (playerSearchTerm.trim()) {
+      const debounceTimer = setTimeout(() => {
+        searchPlayers(playerSearchTerm);
+      }, 300);
+      
+      return () => clearTimeout(debounceTimer);
+    } else {
+      setAvailablePlayers([]);
+      setCurrentPlayers([]);
+    }
+  }, [playerSearchTerm, tournament?.players, searchPlayers]);
+
   // Show skeleton loading while checking auth or loading tournament data
   if (status === "loading" || (loading && !tournament)) {
     return (
@@ -435,7 +605,7 @@ export default function TournamentViewPage({
 
   // Different states for different actions
   const isCompleted = tournament.finalized || false; // Tournament has been finalized
-  const canGenerateMatches = !endDate || endDate > now; // Can generate new matches if end time hasn't passed
+  const canGenerateMatches = !isCompleted && (!endDate || endDate > now); // Can generate new matches if not finalized and end time hasn't passed
   const canSubmitResults = !isCompleted; // Can submit results until tournament is finalized
   const canFinalizeTournament = !isCompleted; // Can finalize until actually finalized
 
@@ -838,7 +1008,7 @@ export default function TournamentViewPage({
             <div>
               <span className="text-gray-400">Created by:</span>
               <div className="flex items-center space-x-2 mt-1">
-                {tournament.creator.image ? (
+                {tournament.creator?.image ? (
                   <Image
                     src={tournament.creator.image}
                     alt={tournament.creator.displayName || "Creator"}
@@ -850,8 +1020,8 @@ export default function TournamentViewPage({
                   <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center">
                     <span className="text-xs font-medium text-white">
                       {(
-                        tournament.creator.displayName ||
-                        tournament.creator.username
+                        tournament.creator?.displayName ||
+                        tournament.creator?.username
                       )
                         ?.charAt(0)
                         .toUpperCase()}
@@ -859,8 +1029,9 @@ export default function TournamentViewPage({
                   </div>
                 )}
                 <span className="text-white">
-                  {tournament.creator.displayName ||
-                    tournament.creator.username}
+                  {tournament.creator?.displayName ||
+                    tournament.creator?.username ||
+                    "Unknown"}
                 </span>
               </div>
             </div>
@@ -921,6 +1092,128 @@ export default function TournamentViewPage({
             )}
           </div>
 
+          {/* Player Management Search - Always visible for admins */}
+          {isAdmin && (
+            <div className="mb-6">
+              <div className="mb-4">
+                <input
+                  type="text"
+                  value={playerSearchTerm}
+                  onChange={(e) => setPlayerSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2 bg-zinc-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Search players to add or remove from tournament..."
+                />
+              </div>
+
+              {/* Search Results - Split View */}
+              {playerSearchTerm.trim() && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Available Players (Left) */}
+                  <div className="bg-zinc-800 rounded-lg p-4 border border-green-600/30">
+                    <h4 className="text-sm font-medium text-green-400 mb-3">Available to Add</h4>
+                    {availablePlayers.length > 0 ? (
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {availablePlayers.map((player) => (
+                          <div
+                            key={player.id}
+                            className="flex items-center justify-between p-3 bg-zinc-700 rounded-md"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                                <span className="text-xs font-medium text-white">
+                                  {player.displayName?.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-white text-sm font-medium">
+                                  {player.displayName}
+                                </span>
+                                {!player.claimed && (
+                                  <span className="text-xs text-gray-400 ml-2">unclaimed</span>
+                                )}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => addPlayerToTournament(player.id, player.displayName || 'Unknown')}
+                              disabled={managingPlayer || isCompleted}
+                              className="px-3 py-1 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {managingPlayer ? 'Adding...' : 'Add'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-gray-400 mb-3">
+                          No players found matching "{playerSearchTerm}"
+                        </p>
+                        {/* Always reserve space for the create button to prevent layout jumping */}
+                        <div className="h-10 flex items-center justify-center">
+                          {!isCompleted && !searchLoading && (
+                            <button
+                              onClick={() => {
+                                setNewPlayerName(playerSearchTerm);
+                                setShowAddPlayerModal(true);
+                              }}
+                              className="px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
+                            >
+                              Create "{playerSearchTerm}" as new player
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Current Players (Right) */}
+                  <div className="bg-zinc-800 rounded-lg p-4 border border-red-600/30">
+                    <h4 className="text-sm font-medium text-red-400 mb-3">Current Players</h4>
+                    {currentPlayers.length > 0 ? (
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {currentPlayers.map((player) => (
+                          <div
+                            key={player.id}
+                            className="flex items-center justify-between p-3 bg-zinc-700 rounded-md"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                                <span className="text-xs font-medium text-white">
+                                  {player.displayName?.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-white text-sm font-medium">
+                                  {player.displayName}
+                                </span>
+                                {!player.claimed && (
+                                  <span className="text-xs text-gray-400 ml-2">unclaimed</span>
+                                )}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => removePlayerFromTournament(player.id, player.displayName || 'Unknown')}
+                              disabled={managingPlayer || isCompleted}
+                              className="px-3 py-1 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {managingPlayer ? 'Removing...' : 'Remove'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-gray-400">
+                          No current players found matching "{playerSearchTerm}"
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {tournament.players.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               No players in this tournament
@@ -940,6 +1233,9 @@ export default function TournamentViewPage({
                       stats={playerStats.get(player.user.id) || null}
                       loading={statsLoading}
                       isAdmin={isAdmin}
+                      canRemove={isAdmin && !isCompleted}
+                      onRemove={removePlayerFromTournament}
+                      removing={managingPlayer}
                     />
                   ))}
               </div>
@@ -1009,7 +1305,7 @@ export default function TournamentViewPage({
               )}
             </div>
             {/* Action buttons for tournament creator */}
-            {userId === tournament.creator.id && (
+            {userId === tournament.creator?.id && (
               <div className="flex items-center gap-3">
                 {/* Submit Results button - only show when there are selected winners and results can be submitted */}
                 {canSubmitResults &&
@@ -1067,7 +1363,7 @@ export default function TournamentViewPage({
                   match.teams.some((team) => team.placement !== null);
                 const canSubmitMatchResults =
                   !isCompleted &&
-                  userId === tournament.creator.id &&
+                  userId === tournament.creator?.id &&
                   !hasResults;
                 const selectedWinner = selectedWinners[match.id];
 
@@ -1215,7 +1511,7 @@ export default function TournamentViewPage({
                   ? "No matches generated yet"
                   : `No matches in Round ${currentRound}`}
               </p>
-              {canGenerateMatches && userId === tournament.creator.id && (
+              {canGenerateMatches && userId === tournament.creator?.id && (
                 <p className="text-sm text-gray-400">
                   {totalRounds === 0
                     ? 'Click "Generate Next Round" to create the first round of matches.'
@@ -1432,7 +1728,7 @@ export default function TournamentViewPage({
             </div>
 
             {/* Finalize Tournament button - only show for tournaments that can be finalized and if user is the creator */}
-            {canFinalizeTournament && userId === tournament.creator.id && (
+            {canFinalizeTournament && userId === tournament.creator?.id && (
               <button
                 onClick={handleFinalizeTournament}
                 disabled={finalizingTournament}
@@ -1444,6 +1740,94 @@ export default function TournamentViewPage({
           </div>
         </div>
       </div>
+
+      {/* Add Player Modal */}
+      {showAddPlayerModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="relative bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg max-w-md w-full mx-4 z-10">
+            <h3 className="text-xl font-semibold text-white mb-4">
+              Add New Player
+            </h3>
+            <p className="text-gray-300 mb-4">
+              This will create a new unclaimed player profile and add them to the tournament.
+            </p>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-white mb-2">
+                Player Name
+              </label>
+              <input
+                type="text"
+                value={newPlayerName}
+                onChange={(e) => setNewPlayerName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newPlayerName.trim() && !managingPlayer) {
+                    createAndAddPlayer();
+                  }
+                }}
+                className="w-full px-4 py-2 bg-zinc-800 border border-red-600/30 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                placeholder="Enter player name..."
+                autoFocus
+                maxLength={50}
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowAddPlayerModal(false);
+                  setNewPlayerName("");
+                }}
+                className="px-4 py-2 bg-gray-600 text-white font-medium rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+                disabled={managingPlayer}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={createAndAddPlayer}
+                disabled={!newPlayerName.trim() || managingPlayer}
+                className="px-4 py-2 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {managingPlayer ? "Creating..." : "Create & Add Player"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Finalize Confirmation Modal */}
+      {showFinalizeConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="relative bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg max-w-md w-full mx-4 z-10">
+            <h3 className="text-xl font-semibold text-white mb-4">
+              Finalize Tournament
+            </h3>
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to finalize this tournament? This action cannot be undone.
+            </p>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowFinalizeConfirm(false)}
+                className="px-4 py-2 bg-gray-600 text-white font-medium rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors"
+                disabled={finalizingTournament}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmFinalizeTournament}
+                disabled={finalizingTournament}
+                className="px-4 py-2 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {finalizingTournament ? "Finalizing..." : "Finalize Tournament"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notifications */}
+      <NotificationContainer />
     </AppLayout>
   );
 }
@@ -1454,12 +1838,27 @@ interface PlayerCardProps {
   stats: PlayerStats | null;
   loading: boolean;
   isAdmin?: boolean;
+  canRemove?: boolean;
+  onRemove?: (playerId: string, playerName: string) => void;
+  removing?: boolean;
 }
 
-function PlayerCard({ player, stats, loading, isAdmin }: PlayerCardProps) {
+function PlayerCard({ player, stats, loading, isAdmin, canRemove, onRemove, removing }: PlayerCardProps) {
 
   return (
-    <div className="bg-zinc-800 rounded-lg p-3 border border-gray-600 hover:border-gray-500 transition-colors">
+    <div className="bg-zinc-800 rounded-lg p-3 border border-gray-600 hover:border-gray-500 transition-colors relative group">
+      {/* Remove Button - Only shown for admins who can remove players */}
+      {canRemove && onRemove && (
+        <button
+          onClick={() => onRemove(player.user.id, player.user.displayName || 'Unknown')}
+          disabled={removing}
+          className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-700 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-xs flex items-center justify-center"
+          title={`Remove ${player.user.displayName} from tournament`}
+        >
+          {removing ? '...' : '×'}
+        </button>
+      )}
+      
       <div className="flex flex-col items-center space-y-2">
         {/* Avatar */}
         {player.user.claimed && player.user.image ? (

@@ -20,6 +20,9 @@ export async function GET(
           },
         },
         players: {
+          where: {
+            active: true
+          },
           include: {
             user: {
               select: {

@@ -60,6 +60,14 @@ export async function POST(
       );
     }
 
+    // Check if tournament is finalized
+    if (tournament.finalized) {
+      return NextResponse.json(
+        { error: "Cannot generate matches for finalized tournaments" },
+        { status: 400 }
+      );
+    }
+
     // Check if tournament is still active
     const now = new Date();
     if (tournament.endTime && tournament.endTime < now) {

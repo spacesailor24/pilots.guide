@@ -172,6 +172,7 @@ model TournamentPlayer {
   id           String     @id @default(cuid())
   tournamentId String
   userId       String
+  active       Boolean    @default(true) // Whether player is currently active in tournament
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   user         User       @relation(fields: [userId], references: [id])
 

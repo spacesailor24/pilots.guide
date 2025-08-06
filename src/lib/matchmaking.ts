@@ -71,6 +71,9 @@ export async function loadPlayerRatings(tournamentId: string): Promise<PlayerRat
     where: { id: tournamentId },
     include: {
       players: {
+        where: {
+          active: true
+        },
         include: {
           user: {
             select: {
