@@ -5,6 +5,127 @@ import { ordinal } from "openskill";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userId");
+    const userIds = searchParams.get("userIds");
+    
+    // If userIds (bulk) is provided, return stats for multiple players
+    if (userIds) {
+      const userIdArray = userIds.split(',').filter(id => id.length > 0);
+      
+      const playerRatings = await prisma.playerRating.findMany({
+        where: {
+          userId: { in: userIdArray }
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              displayName: true,
+              image: true,
+              claimed: true
+            }
+          }
+        }
+      });
+
+      // Calculate ordinals for all players and sort to get correct ranks
+      const allPlayerRatings = await prisma.playerRating.findMany({
+        select: { userId: true, mu: true, sigma: true }
+      });
+
+      // Calculate ordinals and sort by skill (same logic as paginated API)
+      const sortedPlayers = allPlayerRatings
+        .map(rating => ({
+          userId: rating.userId,
+          ordinal: ordinal({ mu: rating.mu, sigma: rating.sigma })
+        }))
+        .sort((a, b) => b.ordinal - a.ordinal); // Sort by ordinal descending
+
+      // Create rank lookup map
+      const rankMap = new Map<string, number>();
+      sortedPlayers.forEach((player, index) => {
+        rankMap.set(player.userId, index + 1);
+      });
+
+      const results = playerRatings.map(playerRating => {
+        const playerOrdinal = ordinal({ mu: playerRating.mu, sigma: playerRating.sigma });
+        const rank = rankMap.get(playerRating.userId) || 0;
+
+        return {
+          userId: playerRating.userId,
+          displayName: playerRating.user.displayName,
+          image: playerRating.user.image,
+          claimed: playerRating.user.claimed,
+          mu: playerRating.mu,
+          sigma: playerRating.sigma,
+          gamesPlayed: playerRating.gamesPlayed,
+          ordinal: playerOrdinal,
+          conservativeRating: playerRating.mu - 3 * playerRating.sigma,
+          rank,
+          lastUpdated: playerRating.updatedAt
+        };
+      });
+
+      return NextResponse.json(results);
+    }
+    
+    // If userId is provided, return individual player stats (same as POST logic)
+    if (userId) {
+      const playerRating = await prisma.playerRating.findUnique({
+        where: { userId },
+        include: {
+          user: {
+            select: {
+              id: true,
+              displayName: true,
+              image: true,
+              claimed: true
+            }
+          }
+        }
+      });
+
+      if (!playerRating) {
+        return NextResponse.json(
+          { error: "Player rating not found" },
+          { status: 404 }
+        );
+      }
+
+      // Calculate rank using ordinal-based sorting (same logic as paginated API)
+      const playerOrdinal = ordinal({ mu: playerRating.mu, sigma: playerRating.sigma });
+      
+      const allPlayerRatings = await prisma.playerRating.findMany({
+        select: { userId: true, mu: true, sigma: true }
+      });
+
+      // Calculate ordinals and sort by skill
+      const sortedPlayers = allPlayerRatings
+        .map(rating => ({
+          userId: rating.userId,
+          ordinal: ordinal({ mu: rating.mu, sigma: rating.sigma })
+        }))
+        .sort((a, b) => b.ordinal - a.ordinal); // Sort by ordinal descending
+
+      // Find rank by position in sorted array
+      const rank = sortedPlayers.findIndex(p => p.userId === userId) + 1;
+
+      return NextResponse.json({
+        userId: playerRating.userId,
+        displayName: playerRating.user.displayName,
+        image: playerRating.user.image,
+        claimed: playerRating.user.claimed,
+        mu: playerRating.mu,
+        sigma: playerRating.sigma,
+        gamesPlayed: playerRating.gamesPlayed,
+        ordinal: playerOrdinal,
+        conservativeRating: playerRating.mu - 3 * playerRating.sigma,
+        rank,
+        lastUpdated: playerRating.updatedAt
+      });
+    }
+
+    // Otherwise, return paginated rankings list
     const limit = parseInt(searchParams.get("limit") || "50");
     const offset = parseInt(searchParams.get("offset") || "0");
     const minGames = parseInt(searchParams.get("minGames") || "0");

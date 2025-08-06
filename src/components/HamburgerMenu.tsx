@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -17,12 +17,15 @@ export default function HamburgerMenu() {
   const { activeTournaments } = useTournaments();
 
   // Active tournaments subsection state - persisted across navigation
-  const [isActiveTournamentsOpen, setIsActiveTournamentsOpen] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("activeTournamentsOpen") === "true";
-    }
-    return false;
-  });
+  const [isActiveTournamentsOpen, setIsActiveTournamentsOpen] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Hydrate the state from localStorage after component mounts
+  useEffect(() => {
+    const savedState = localStorage.getItem("activeTournamentsOpen") === "true";
+    setIsActiveTournamentsOpen(savedState);
+    setIsHydrated(true);
+  }, []);
 
   // Persist toggle state to localStorage
   const toggleActiveTournaments = () => {
@@ -221,7 +224,7 @@ export default function HamburgerMenu() {
                             <span>Active Tournaments ({activeTournaments.length})</span>
                             <svg
                               className={`w-4 h-4 transition-transform ${
-                                isActiveTournamentsOpen ? "rotate-90" : ""
+                                isHydrated && isActiveTournamentsOpen ? "rotate-90" : ""
                               }`}
                               fill="none"
                               stroke="currentColor"

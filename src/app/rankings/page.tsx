@@ -35,7 +35,7 @@ interface RankingsResponse {
 export default function RankingsPage() {
   const { data: session } = useSession();
   const [rankings, setRankings] = useState<RankingsResponse | null>(null);
-  
+
   const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,17 +48,17 @@ export default function RankingsPage() {
     const fetchRankings = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         const offset = (currentPage - 1) * playersPerPage;
         const response = await fetch(
           `/api/players/rankings?limit=${playersPerPage}&offset=${offset}&minGames=${minGames}`
         );
-        
+
         if (!response.ok) {
           throw new Error("Failed to fetch rankings");
         }
-        
+
         const data = await response.json();
         setRankings(data);
       } catch (err) {
@@ -75,7 +75,10 @@ export default function RankingsPage() {
   const RankingsSkeleton = () => (
     <div className="space-y-4">
       {[...Array(10)].map((_, i) => (
-        <div key={i} className="bg-zinc-800 rounded-lg p-4 border border-gray-600">
+        <div
+          key={i}
+          className="bg-zinc-800 rounded-lg p-4 border border-gray-600"
+        >
           <div className="flex items-center space-x-4">
             <div className="w-8 h-8 bg-zinc-700 rounded animate-pulse"></div>
             <div className="w-12 h-12 bg-zinc-700 rounded-full animate-pulse"></div>
@@ -113,7 +116,6 @@ export default function RankingsPage() {
     );
   }
 
-
   if (error) {
     return (
       <AppLayout>
@@ -125,16 +127,21 @@ export default function RankingsPage() {
     );
   }
 
-  const totalPages = rankings ? Math.ceil(rankings.pagination.total / playersPerPage) : 1;
+  const totalPages = rankings
+    ? Math.ceil(rankings.pagination.total / playersPerPage)
+    : 1;
 
   return (
     <AppLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
-          <h1 className="text-4xl font-semibold text-white mb-4">Player Rankings</h1>
+          <h1 className="text-4xl font-semibold text-white mb-4">
+            Player Rankings
+          </h1>
           <p className="text-gray-400">
-            Global leaderboard based on OpenSkill rating system. Rankings are updated after each match.
+            Global leaderboard based on OpenSkill rating system. Rankings are
+            updated after each match.
           </p>
         </div>
 
@@ -158,12 +165,58 @@ export default function RankingsPage() {
                 <option value={10}>10+ Games</option>
               </select>
             </div>
-            
+
             {rankings && (
               <div className="text-gray-400 text-sm">
-                Showing {rankings.players.length} of {rankings.pagination.total} players
+                Showing {rankings.players.length} of {rankings.pagination.total}{" "}
+                players
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Rating System Info */}
+        <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
+          <h2 className="text-xl font-semibold text-white mb-4">
+            About the Rating System
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-300">
+            <div>
+              <h3 className="font-medium text-white mb-2">OpenSkill Rating</h3>
+              <ul className="space-y-1">
+                <li>
+                  <strong>Rating:</strong> Current skill estimate (ordinal)
+                </li>
+                <li>
+                  <strong>Conservative:</strong> 99.7% confidence lower bound
+                </li>
+                <li>
+                  <strong>μ (Mu):</strong> Mean skill level
+                </li>
+                <li>
+                  <strong>σ (Sigma):</strong> Uncertainty in skill level
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-medium text-white mb-2">
+                Uncertainty Indicator
+              </h3>
+              <ul className="space-y-1">
+                <li>
+                  <span className="inline-block w-3 h-3 bg-green-500 rounded-full mr-2"></span>
+                  Low uncertainty (σ &lt; 4)
+                </li>
+                <li>
+                  <span className="inline-block w-3 h-3 bg-yellow-500 rounded-full mr-2"></span>
+                  Medium uncertainty (σ 4-6)
+                </li>
+                <li>
+                  <span className="inline-block w-3 h-3 bg-red-500 rounded-full mr-2"></span>
+                  High uncertainty (σ &gt; 6)
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
@@ -189,12 +242,17 @@ export default function RankingsPage() {
                 >
                   {/* Rank */}
                   <div className="col-span-1 flex items-center">
-                    <div className={`text-lg font-bold ${
-                      player.rank === 1 ? "text-yellow-400" :
-                      player.rank === 2 ? "text-gray-300" :
-                      player.rank === 3 ? "text-amber-600" :
-                      "text-white"
-                    }`}>
+                    <div
+                      className={`text-lg font-bold ${
+                        player.rank === 1
+                          ? "text-yellow-400"
+                          : player.rank === 2
+                          ? "text-gray-300"
+                          : player.rank === 3
+                          ? "text-amber-600"
+                          : "text-white"
+                      }`}
+                    >
                       #{player.rank}
                     </div>
                   </div>
@@ -210,22 +268,28 @@ export default function RankingsPage() {
                         className="w-12 h-12 rounded-full"
                       />
                     ) : (
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        player.claimed ? 'bg-green-600' : 'bg-gray-600'
-                      }`}>
+                      <div
+                        className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                          player.claimed ? "bg-green-600" : "bg-gray-600"
+                        }`}
+                      >
                         <span className="text-sm font-medium text-white">
                           {player.displayName?.charAt(0).toUpperCase()}
                         </span>
                       </div>
                     )}
                     <div>
-                      <h3 className="font-medium text-white">{player.displayName}</h3>
+                      <h3 className="font-medium text-white">
+                        {player.displayName}
+                      </h3>
                       {isAdmin && (
-                        <div className={`text-xs px-2 py-1 rounded ${
-                          player.claimed 
-                            ? "bg-green-900/20 text-green-400"
-                            : "bg-orange-900/20 text-orange-400"
-                        }`}>
+                        <div
+                          className={`text-xs px-2 py-1 rounded w-fit ${
+                            player.claimed
+                              ? "bg-green-900/20 text-green-400"
+                              : "bg-orange-900/20 text-orange-400"
+                          }`}
+                        >
                           {player.claimed ? "Claimed" : "Unclaimed"}
                         </div>
                       )}
@@ -260,12 +324,16 @@ export default function RankingsPage() {
 
                   {/* Uncertainty */}
                   <div className="col-span-1 flex justify-center">
-                    <div className={`w-3 h-3 rounded-full ${
-                      player.sigma < 4 ? "bg-green-500" :
-                      player.sigma < 6 ? "bg-yellow-500" :
-                      "bg-red-500"
-                    }`} title={`Uncertainty: ${player.sigma.toFixed(2)}`}>
-                    </div>
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        player.sigma < 4
+                          ? "bg-green-500"
+                          : player.sigma < 6
+                          ? "bg-yellow-500"
+                          : "bg-red-500"
+                      }`}
+                      title={`Uncertainty: ${player.sigma.toFixed(2)}`}
+                    ></div>
                   </div>
                 </div>
               ))}
@@ -282,13 +350,13 @@ export default function RankingsPage() {
           <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="px-4 py-2 bg-zinc-700 text-white rounded-md hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Previous
               </button>
-              
+
               <div className="flex items-center space-x-2">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum;
@@ -301,7 +369,7 @@ export default function RankingsPage() {
                   } else {
                     pageNum = currentPage - 2 + i;
                   }
-                  
+
                   return (
                     <button
                       key={pageNum}
@@ -317,45 +385,23 @@ export default function RankingsPage() {
                   );
                 })}
               </div>
-              
+
               <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
                 disabled={currentPage === totalPages}
                 className="px-4 py-2 bg-zinc-700 text-white rounded-md hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Next
               </button>
             </div>
-            
+
             <div className="text-center text-sm text-gray-400 mt-4">
               Page {currentPage} of {totalPages}
             </div>
           </div>
         )}
-
-        {/* Rating System Info */}
-        <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
-          <h2 className="text-xl font-semibold text-white mb-4">About the Rating System</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-300">
-            <div>
-              <h3 className="font-medium text-white mb-2">OpenSkill Rating</h3>
-              <ul className="space-y-1">
-                <li><strong>Rating:</strong> Current skill estimate (ordinal)</li>
-                <li><strong>Conservative:</strong> 99.7% confidence lower bound</li>
-                <li><strong>μ (Mu):</strong> Mean skill level</li>
-                <li><strong>σ (Sigma):</strong> Uncertainty in skill level</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-medium text-white mb-2">Uncertainty Indicator</h3>
-              <ul className="space-y-1">
-                <li><span className="inline-block w-3 h-3 bg-green-500 rounded-full mr-2"></span>Low uncertainty (σ &lt; 4)</li>
-                <li><span className="inline-block w-3 h-3 bg-yellow-500 rounded-full mr-2"></span>Medium uncertainty (σ 4-6)</li>
-                <li><span className="inline-block w-3 h-3 bg-red-500 rounded-full mr-2"></span>High uncertainty (σ &gt; 6)</li>
-              </ul>
-            </div>
-          </div>
-        </div>
       </div>
     </AppLayout>
   );

@@ -18,6 +18,7 @@ interface TournamentPlayer {
 }
 
 interface PlayerStats {
+  userId: string;
   rank: number;
   rating: number;
   gamesPlayed: number;
@@ -113,6 +114,8 @@ export default function TournamentViewPage({
   >([]);
   const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0);
   const [showFinalizeConfirm, setShowFinalizeConfirm] = useState(false);
+  const [playerStats, setPlayerStats] = useState<Map<string, PlayerStats>>(new Map());
+  const [statsLoading, setStatsLoading] = useState(true);
 
   // Skeleton Loading Component
   const TournamentSkeleton = () => (
@@ -270,6 +273,55 @@ export default function TournamentViewPage({
   useEffect(() => {
     fetchTournament();
   }, [fetchTournament]);
+
+  // Fetch bulk player stats when tournament data is available
+  useEffect(() => {
+    if (!tournament) return;
+
+    const fetchBulkStats = async () => {
+      setStatsLoading(true);
+      try {
+        // Collect all unique user IDs from tournament players and match participants
+        const userIds = new Set<string>();
+        
+        // Add tournament player IDs
+        tournament.players.forEach(player => {
+          userIds.add(player.user.id);
+        });
+        
+        // Add match participant IDs
+        tournament.matches?.forEach(match => {
+          match.teams?.forEach(team => {
+            team.players?.forEach(participant => {
+              userIds.add(participant.userId);
+            });
+          });
+        });
+
+        if (userIds.size > 0) {
+          const userIdArray = Array.from(userIds);
+          const response = await fetch(`/api/players/rankings?userIds=${userIdArray.join(',')}`);
+          
+          if (response.ok) {
+            const statsArray = await response.json();
+            const statsMap = new Map<string, PlayerStats>();
+            
+            statsArray.forEach((stats: PlayerStats) => {
+              statsMap.set(stats.userId, stats);
+            });
+            
+            setPlayerStats(statsMap);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch bulk player stats:", error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    fetchBulkStats();
+  }, [tournament, statsRefreshTrigger]);
 
   // Group matches by their explicit generationRound field
   const groupedMatches =
@@ -885,7 +937,8 @@ export default function TournamentViewPage({
                     <PlayerCard
                       key={player.id}
                       player={player}
-                      refreshTrigger={statsRefreshTrigger}
+                      stats={playerStats.get(player.user.id) || null}
+                      loading={statsLoading}
                       isAdmin={isAdmin}
                     />
                   ))}
@@ -1141,7 +1194,7 @@ export default function TournamentViewPage({
                                     <MatchPlayerCard
                                       key={participant.id}
                                       participant={participant}
-                                      refreshTrigger={statsRefreshTrigger}
+                                      stats={playerStats.get(participant.userId) || null}
                                     />
                                   ))}
                                 </div>
@@ -1398,36 +1451,12 @@ export default function TournamentViewPage({
 // Player Card Component with Stats
 interface PlayerCardProps {
   player: TournamentPlayer;
-  refreshTrigger?: number; // Used to trigger stats refresh
+  stats: PlayerStats | null;
+  loading: boolean;
   isAdmin?: boolean;
 }
 
-function PlayerCard({ player, refreshTrigger, isAdmin }: PlayerCardProps) {
-  const [stats, setStats] = useState<PlayerStats | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/players/rankings`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: player.user.id }),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch player stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, [player.user.id, refreshTrigger]);
+function PlayerCard({ player, stats, loading, isAdmin }: PlayerCardProps) {
 
   return (
     <div className="bg-zinc-800 rounded-lg p-3 border border-gray-600 hover:border-gray-500 transition-colors">
@@ -1513,34 +1542,13 @@ interface MatchPlayerCardProps {
       claimed: boolean;
     };
   };
-  refreshTrigger?: number;
+  stats: PlayerStats | null;
 }
 
 function MatchPlayerCard({
   participant,
-  refreshTrigger,
+  stats,
 }: MatchPlayerCardProps) {
-  const [stats, setStats] = useState<PlayerStats | null>(null);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch(`/api/players/rankings`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: participant.userId }),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch player stats:", error);
-      }
-    };
-
-    fetchStats();
-  }, [participant.userId, refreshTrigger]);
 
   return (
     <div className="flex items-center justify-between">
