@@ -63,18 +63,19 @@ export default function Sidebar() {
         })),
       ],
     },
-    // Only show Match Making and Admin sections to admins
+    // Tournaments section - visible to everyone
+    {
+      section: "TOURNAMENTS",
+      items: [
+        { name: "Overview", href: "/tournaments" },
+        ...(isAdmin ? [{ name: "Create Tournament", href: "/tournaments/create" }] : []),
+        { name: "Player Rankings", href: "/rankings" },
+        { name: "Completed Tournaments", href: "/tournaments/completed" },
+      ],
+    },
+    // Admin section - only show to admins
     ...(isAdmin
       ? [
-          {
-            section: "TOURNAMENTS",
-            items: [
-              { name: "Overview", href: "/tournaments" },
-              { name: "Create Tournament", href: "/tournaments/create" },
-              { name: "Player Rankings", href: "/rankings" },
-              { name: "Completed Tournaments", href: "/tournaments/completed" },
-            ],
-          },
           {
             section: "ADMIN",
             items: [{ name: "Manage Players", href: "/admin/players" }],
@@ -166,7 +167,6 @@ export default function Sidebar() {
 
                 {/* Active Tournaments Subsection for Tournaments */}
                 {section.section === "TOURNAMENTS" &&
-                  isAdmin &&
                   activeTournaments.length > 0 && (
                     <li>
                       <button

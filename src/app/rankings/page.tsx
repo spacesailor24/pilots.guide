@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import AppLayout from "@/components/AppLayout";
 
@@ -34,8 +33,7 @@ interface RankingsResponse {
 }
 
 export default function RankingsPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { data: session } = useSession();
   const [rankings, setRankings] = useState<RankingsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,20 +41,9 @@ export default function RankingsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const playersPerPage = 25;
 
-  // Redirect if not admin
-  useEffect(() => {
-    const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
-    if (status !== "loading" && !isAdmin) {
-      router.push("/");
-    }
-  }, [session, status, router]);
-
   // Fetch rankings data
   useEffect(() => {
     const fetchRankings = async () => {
-      const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
-      if (!isAdmin) return;
-
       setLoading(true);
       setError(null);
       
@@ -80,7 +67,7 @@ export default function RankingsPage() {
     };
 
     fetchRankings();
-  }, [session?.user, currentPage, minGames]);
+  }, [currentPage, minGames]);
 
   // Rankings skeleton component
   const RankingsSkeleton = () => (
@@ -108,7 +95,7 @@ export default function RankingsPage() {
     </div>
   );
 
-  if (status === "loading" || loading) {
+  if (loading) {
     return (
       <AppLayout>
         <div className="space-y-6">
@@ -124,10 +111,6 @@ export default function RankingsPage() {
     );
   }
 
-  const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
-  if (!isAdmin) {
-    return null;
-  }
 
   if (error) {
     return (

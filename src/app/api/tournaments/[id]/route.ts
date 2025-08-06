@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/permissions";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Check admin permission
-    await requireAdmin();
 
     const { id } = await params;
     const tournament = await prisma.tournament.findUnique({
@@ -84,13 +81,6 @@ export async function GET(
 
     return NextResponse.json(tournament);
   } catch (error: unknown) {
-    if (error instanceof Error && error.message === "Admin access required") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
-    }
-
     console.error("Failed to fetch tournament:", error);
     return NextResponse.json(
       { error: "Failed to fetch tournament" },

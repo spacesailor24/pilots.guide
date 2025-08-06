@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import AppLayout from "@/components/AppLayout";
 import { useTournaments } from "@/contexts/TournamentsContext";
@@ -78,7 +77,6 @@ export default function TournamentViewPage({
   params: Promise<{ id: string }>;
 }) {
   const { data: session, status } = useSession();
-  const router = useRouter();
   const { activeTournaments, completedTournaments, refreshTournaments } =
     useTournaments();
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -200,16 +198,8 @@ export default function TournamentViewPage({
   const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
   const userId = (session?.user as { id?: string })?.id;
 
-  // Redirect if not admin
-  useEffect(() => {
-    if (status !== "loading" && !isAdmin) {
-      router.push("/");
-    }
-  }, [isAdmin, status, router]);
-
   // Fetch tournament data
   const fetchTournament = useCallback(async () => {
-    if (!isAdmin) return;
 
     const { id } = await params;
 
@@ -270,7 +260,6 @@ export default function TournamentViewPage({
       }
     }
   }, [
-    isAdmin,
     params,
     currentTournamentId,
     tournament,
@@ -366,10 +355,6 @@ export default function TournamentViewPage({
     );
   }
 
-  // Return null while redirecting if not admin
-  if (!isAdmin) {
-    return null;
-  }
 
   if (error) {
     return (

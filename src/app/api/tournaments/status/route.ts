@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/permissions";
 
 export async function GET() {
   try {
-    // Check admin permission
-    await requireAdmin();
 
     // Get active tournaments (not finalized)
     const activeTournaments = await prisma.tournament.findMany({
@@ -18,6 +15,7 @@ export async function GET() {
             id: true,
             username: true,
             displayName: true,
+            image: true,
           },
         },
         players: {
@@ -54,6 +52,7 @@ export async function GET() {
             id: true,
             username: true,
             displayName: true,
+            image: true,
           },
         },
         players: {
@@ -84,13 +83,6 @@ export async function GET() {
       completedTournaments,
     });
   } catch (error: unknown) {
-    if (error instanceof Error && error.message === "Admin access required") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
-    }
-
     console.error("Failed to fetch tournaments by status:", error);
     return NextResponse.json(
       { error: "Failed to fetch tournaments" },

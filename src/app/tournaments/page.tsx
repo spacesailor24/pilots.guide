@@ -1,27 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import AppLayout from "@/components/AppLayout";
 import LinkWithTransition from "@/components/LinkWithTransition";
 import { useTournaments } from "@/contexts/TournamentsContext";
 
 export default function TournamentsPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  const { data: session } = useSession();
   const { activeTournaments, completedTournaments, loading } = useTournaments();
 
-  // Redirect if not admin
-  useEffect(() => {
-    const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
-    if (status !== "loading" && !isAdmin) {
-      router.push("/");
-    }
-  }, [session, status, router]);
-
-  // Show loading while checking auth
-  if (status === "loading" || loading) {
+  // Show loading while fetching tournaments
+  if (loading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center min-h-[50vh]">
@@ -34,11 +23,7 @@ export default function TournamentsPage() {
     );
   }
 
-  // Return null while redirecting if not admin
   const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
-  if (!isAdmin) {
-    return null;
-  }
 
   const totalTournaments = activeTournaments.length + completedTournaments.length;
 
@@ -80,31 +65,33 @@ export default function TournamentsPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
-          <h2 className="text-2xl font-semibold text-white mb-4">Quick Actions</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <LinkWithTransition
-              href="/tournaments/create"
-              className="flex items-center justify-center px-6 py-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Create New Tournament
-            </LinkWithTransition>
+        {isAdmin && (
+          <div className="bg-zinc-900 rounded-lg border border-red-600 p-6 shadow-lg">
+            <h2 className="text-2xl font-semibold text-white mb-4">Quick Actions</h2>
             
-            <LinkWithTransition
-              href="/tournaments/completed"
-              className="flex items-center justify-center px-6 py-4 bg-zinc-700 text-gray-300 rounded-lg hover:bg-zinc-600 transition-colors font-medium"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              View Completed Tournaments
-            </LinkWithTransition>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <LinkWithTransition
+                href="/tournaments/create"
+                className="flex items-center justify-center px-6 py-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Create New Tournament
+              </LinkWithTransition>
+              
+              <LinkWithTransition
+                href="/tournaments/completed"
+                className="flex items-center justify-center px-6 py-4 bg-zinc-700 text-gray-300 rounded-lg hover:bg-zinc-600 transition-colors font-medium"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                View Completed Tournaments
+              </LinkWithTransition>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Active Tournaments */}
         {activeTournaments.length > 0 && (

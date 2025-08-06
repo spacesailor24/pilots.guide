@@ -56,13 +56,6 @@ export function TournamentsProvider({ children }: { children: React.ReactNode })
   const [error, setError] = useState<string | null>(null);
 
   const fetchTournaments = useCallback(async () => {
-    const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
-    if (!isAdmin) {
-      setActiveTournaments([]);
-      setCompletedTournaments([]);
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
@@ -83,11 +76,11 @@ export function TournamentsProvider({ children }: { children: React.ReactNode })
     } finally {
       setLoading(false);
     }
-  }, [session?.user]);
+  }, []);
 
   useEffect(() => {
     fetchTournaments();
-  }, [session?.user, fetchTournaments]);
+  }, [fetchTournaments]);
 
   const refreshTournaments = async () => {
     await fetchTournaments();
