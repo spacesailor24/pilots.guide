@@ -385,23 +385,23 @@ async function main() {
     const spacesailorUser = tournamentPlayers.find(p => p.displayName === "spacesai1or") || tournamentPlayers[0];
 
     // Create an active tournament without pre-generated matches
-    const activeTournament = await prisma.tournament.create({
-      data: {
-        name: "Winter Championship 2025",
-        startTime: oneHourAgo,
-        endTime: threeDaysFromNow,
-        finalized: false,
-        createdBy: spacesailorUser.id,
-        players: {
-          create: tournamentPlayers.map(player => ({
-            userId: player.id,
-          })),
-        },
-        // Matches will be generated dynamically using the API
-      },
-    });
+    // const activeTournament = await prisma.tournament.create({
+    //   data: {
+    //     name: "Winter Championship 2025",
+    //     startTime: oneHourAgo,
+    //     endTime: threeDaysFromNow,
+    //     finalized: false,
+    //     createdBy: spacesailorUser.id,
+    //     players: {
+    //       create: tournamentPlayers.map(player => ({
+    //         userId: player.id,
+    //       })),
+    //     },
+    //     // Matches will be generated dynamically using the API
+    //   },
+    // });
 
-    console.log("✅ Created tournament:", activeTournament.name);
+    // console.log("✅ Created tournament:", activeTournament.name);
 
     // Create Legacy Matches tournament from historical data
     const legacyMatches = [
@@ -616,16 +616,16 @@ async function main() {
 
     // Initialize player ratings using the same OpenSkill system as the API
     console.log("📊 Initializing player ratings from legacy matches using OpenSkill...");
-    
+
     // Create default ratings for all players who participated in legacy matches
     const { rating } = await import('openskill');
-    
+
     for (const player of legacyPlayers) {
       const defaultRating = rating();
       const existingRating = await prisma.playerRating.findUnique({
         where: { userId: player.id }
       });
-      
+
       if (!existingRating) {
         await prisma.playerRating.create({
           data: {
@@ -637,7 +637,7 @@ async function main() {
         });
       }
     }
-    
+
     // Process all legacy matches through the rating system
     const allMatches = await prisma.match.findMany({
       where: { tournamentId: legacyTournament.id },
@@ -650,14 +650,14 @@ async function main() {
       },
       orderBy: { name: 'asc' }
     });
-    
+
     for (const match of allMatches) {
       // Convert match data to the format expected by updateRatingsAfterMatch
       const teamResults = match.teams.map(team => ({
         playerIds: team.players.map(p => p.userId),
         placement: team.placement || 2
       }));
-      
+
       // Update ratings using the same system as live matches
       await updateRatingsAfterMatch({
         tournamentId: legacyTournament.id,
@@ -665,7 +665,7 @@ async function main() {
         teamResults
       });
     }
-    
+
     console.log("📊 Player ratings initialized using OpenSkill rating system!");
   }
 
