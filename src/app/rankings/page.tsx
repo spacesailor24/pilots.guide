@@ -193,7 +193,7 @@ export default function RankingsPage() {
                 <div className="col-span-2 text-right">Rating</div>
                 <div className="col-span-2 text-right">Conservative</div>
                 <div className="col-span-2 text-right">Games</div>
-                <div className="col-span-1 text-right">Uncertainty</div>
+                <div className="col-span-1 text-center">Uncertainty</div>
               </div>
 
               {/* Player Rows */}
@@ -272,7 +272,7 @@ export default function RankingsPage() {
                   </div>
 
                   {/* Uncertainty */}
-                  <div className="col-span-1 text-right">
+                  <div className="col-span-1 flex justify-center">
                     <div className={`w-3 h-3 rounded-full ${
                       player.sigma < 4 ? "bg-green-500" :
                       player.sigma < 6 ? "bg-yellow-500" :

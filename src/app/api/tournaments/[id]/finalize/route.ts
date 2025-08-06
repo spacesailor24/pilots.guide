@@ -24,7 +24,7 @@ export async function POST(
       select: {
         id: true,
         createdBy: true,
-        endTime: true
+        finalized: true
       }
     });
 
@@ -43,19 +43,19 @@ export async function POST(
       );
     }
 
-    // Check if tournament is already completed
-    if (tournament.endTime) {
+    // Check if tournament is already finalized
+    if (tournament.finalized) {
       return NextResponse.json(
-        { error: "Tournament is already completed" },
+        { error: "Tournament is already finalized" },
         { status: 400 }
       );
     }
 
-    // Update tournament to set endTime (marking it as completed)
+    // Update tournament to set finalized flag
     const updatedTournament = await prisma.tournament.update({
       where: { id: tournamentId },
       data: {
-        endTime: new Date()
+        finalized: true
       }
     });
 
@@ -64,7 +64,7 @@ export async function POST(
       message: "Tournament finalized successfully",
       tournament: {
         id: updatedTournament.id,
-        endTime: updatedTournament.endTime
+        finalized: updatedTournament.finalized
       }
     });
 

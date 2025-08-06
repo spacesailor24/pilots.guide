@@ -90,7 +90,7 @@ export default function Sidebar() {
         <LinkWithTransition href="/welcome" className="block">
           <div className="flex items-center space-x-3">
             <Image
-              src="/images/spacebook_logo.png"
+              src="/images/logo.png"
               alt="Spacebook Logo"
               width={48}
               height={48}

@@ -8,6 +8,7 @@ interface Tournament {
   name: string;
   startTime: string;
   endTime: string | null;
+  finalized: boolean;
   creator: {
     id: string;
     username: string | null;

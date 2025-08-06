@@ -15,11 +15,11 @@ export default function HamburgerMenu() {
   const { data: session } = useSession();
   const { shipsWithBuilds } = useShips();
   const { activeTournaments } = useTournaments();
-  
+
   // Active tournaments subsection state - persisted across navigation
   const [isActiveTournamentsOpen, setIsActiveTournamentsOpen] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('activeTournamentsOpen') === 'true';
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("activeTournamentsOpen") === "true";
     }
     return false;
   });
@@ -28,11 +28,11 @@ export default function HamburgerMenu() {
   const toggleActiveTournaments = () => {
     const newState = !isActiveTournamentsOpen;
     setIsActiveTournamentsOpen(newState);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('activeTournamentsOpen', newState.toString());
+    if (typeof window !== "undefined") {
+      localStorage.setItem("activeTournamentsOpen", newState.toString());
     }
   };
-  
+
   const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin || false;
 
   const navigation = [
@@ -65,22 +65,22 @@ export default function HamburgerMenu() {
       ],
     },
     // Only show Match Making and Admin sections to admins
-    ...(isAdmin ? [
-      {
-        section: "TOURNAMENTS",
-        items: [
-          { name: "Overview", href: "/tournaments" },
-          { name: "Create Tournament", href: "/tournaments/create" },
-          { name: "Completed Tournaments", href: "/tournaments/completed" },
-        ],
-      },
-      {
-        section: "ADMIN",
-        items: [
-          { name: "Manage Players", href: "/admin/players" },
-        ],
-      },
-    ] : []),
+    ...(isAdmin
+      ? [
+          {
+            section: "TOURNAMENTS",
+            items: [
+              { name: "Overview", href: "/tournaments" },
+              { name: "Create Tournament", href: "/tournaments/create" },
+              { name: "Completed Tournaments", href: "/tournaments/completed" },
+            ],
+          },
+          {
+            section: "ADMIN",
+            items: [{ name: "Manage Players", href: "/admin/players" }],
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -128,15 +128,19 @@ export default function HamburgerMenu() {
             <LinkWithTransition href="/welcome" className="block">
               <div className="flex items-center space-x-3">
                 <Image
-                  src="/images/spacebook_logo.png"
+                  src="/images/logo.png"
                   alt="Spacebook Logo"
                   width={48}
                   height={48}
                   className="w-12 h-12"
                 />
                 <div>
-                  <h1 className="text-lg font-semibold text-red-500">pilots.guide</h1>
-                  <p className="text-sm text-gray-400">The Pilot's Guide to the 'Verse</p>
+                  <h1 className="text-lg font-semibold text-red-500">
+                    pilots.guide
+                  </h1>
+                  <p className="text-sm text-gray-400">
+                    The Pilot's Guide to the 'Verse
+                  </p>
                 </div>
               </div>
             </LinkWithTransition>
@@ -156,7 +160,7 @@ export default function HamburgerMenu() {
                       <>
                         {/* Overview */}
                         {section.items
-                          .filter(item => item.name === "Overview")
+                          .filter((item) => item.name === "Overview")
                           .map((item) => {
                             const isActive = pathname === item.href;
                             return (
@@ -175,10 +179,10 @@ export default function HamburgerMenu() {
                               </li>
                             );
                           })}
-                        
+
                         {/* Create Tournament */}
                         {section.items
-                          .filter(item => item.name === "Create Tournament")
+                          .filter((item) => item.name === "Create Tournament")
                           .map((item) => {
                             const isActive = pathname === item.href;
                             return (
@@ -201,62 +205,72 @@ export default function HamburgerMenu() {
                     )}
 
                     {/* Active Tournaments Subsection for Tournaments */}
-                    {section.section === "TOURNAMENTS" && isAdmin && activeTournaments.length > 0 && (
-                      <li>
-                        <button
-                          onClick={toggleActiveTournaments}
-                          className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide hover:text-gray-300 transition-colors"
-                        >
-                          <span>Active Tournaments</span>
-                          <svg
-                            className={`w-4 h-4 transition-transform ${
-                              isActiveTournamentsOpen ? "rotate-90" : ""
-                            }`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                    {section.section === "TOURNAMENTS" &&
+                      isAdmin &&
+                      activeTournaments.length > 0 && (
+                        <li>
+                          <button
+                            onClick={toggleActiveTournaments}
+                            className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide hover:text-gray-300 transition-colors"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
-                        </button>
-                        
-                        {isActiveTournamentsOpen && (
-                          <ul className="space-y-1 ml-4">
-                            {activeTournaments.map((tournament) => {
-                              const tournamentPath = `/tournaments/${tournament.id}`;
-                              const isTournamentActive = pathname === tournamentPath;
-                              return (
-                                <li key={tournament.id}>
-                                  <LinkWithTransition
-                                    href={tournamentPath}
-                                    onClick={() => setIsOpen(false)}
-                                    className={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
-                                      isTournamentActive
-                                        ? "text-red-400 bg-red-900/20 font-medium border border-red-600/30"
-                                        : "text-gray-300 hover:bg-red-900/10 hover:text-red-400"
-                                    }`}
-                                  >
-                                    <span className="truncate" title={tournament.name}>
-                                      {tournament.name}
-                                    </span>
-                                  </LinkWithTransition>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        )}
-                      </li>
-                    )}
+                            <span>Active Tournaments</span>
+                            <svg
+                              className={`w-4 h-4 transition-transform ${
+                                isActiveTournamentsOpen ? "rotate-90" : ""
+                              }`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5l7 7-7 7"
+                              />
+                            </svg>
+                          </button>
+
+                          {isActiveTournamentsOpen && (
+                            <ul className="space-y-1 ml-4">
+                              {activeTournaments.map((tournament) => {
+                                const tournamentPath = `/tournaments/${tournament.id}`;
+                                const isTournamentActive =
+                                  pathname === tournamentPath;
+                                return (
+                                  <li key={tournament.id}>
+                                    <LinkWithTransition
+                                      href={tournamentPath}
+                                      onClick={() => setIsOpen(false)}
+                                      className={`flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
+                                        isTournamentActive
+                                          ? "text-red-400 bg-red-900/20 font-medium border border-red-600/30"
+                                          : "text-gray-300 hover:bg-red-900/10 hover:text-red-400"
+                                      }`}
+                                    >
+                                      <span
+                                        className="truncate"
+                                        title={tournament.name}
+                                      >
+                                        {tournament.name}
+                                      </span>
+                                    </LinkWithTransition>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </li>
+                      )}
 
                     {/* Render remaining items (or all items for non-Tournaments sections) */}
-                    {section.section === "TOURNAMENTS" 
+                    {section.section === "TOURNAMENTS"
                       ? section.items
-                          .filter(item => item.name !== "Overview" && item.name !== "Create Tournament")
+                          .filter(
+                            (item) =>
+                              item.name !== "Overview" &&
+                              item.name !== "Create Tournament"
+                          )
                           .map((item) => {
                             const isActive = pathname === item.href;
                             return (
@@ -292,8 +306,7 @@ export default function HamburgerMenu() {
                               </LinkWithTransition>
                             </li>
                           );
-                        })
-                    }
+                        })}
                   </ul>
                 </div>
               ))}

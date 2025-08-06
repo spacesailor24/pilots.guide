@@ -155,7 +155,8 @@ model Tournament {
   id          String            @id @default(cuid())
   name        String
   startTime   DateTime
-  endTime     DateTime?
+  endTime     DateTime?        // Scheduled end time (restricts new match generation)
+  finalized   Boolean          @default(false) // Whether tournament has been finalized
   createdBy   String
   creator     User             @relation(fields: [createdBy], references: [id])
   players     TournamentPlayer[]

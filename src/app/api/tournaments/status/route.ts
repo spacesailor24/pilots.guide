@@ -7,15 +7,10 @@ export async function GET() {
     // Check admin permission
     await requireAdmin();
 
-    const now = new Date();
-
-    // Get active tournaments (haven't ended yet)
+    // Get active tournaments (not finalized)
     const activeTournaments = await prisma.tournament.findMany({
       where: {
-        OR: [
-          { endTime: null }, // No end time specified
-          { endTime: { gt: now } }, // End time is in the future
-        ],
+        finalized: false,
       },
       include: {
         creator: {
@@ -48,12 +43,10 @@ export async function GET() {
       },
     });
 
-    // Get completed tournaments (have ended)
+    // Get completed tournaments (finalized)
     const completedTournaments = await prisma.tournament.findMany({
       where: {
-        endTime: {
-          lte: now, // End time is in the past
-        },
+        finalized: true,
       },
       include: {
         creator: {
