@@ -886,6 +886,7 @@ export default function TournamentViewPage({
                       key={player.id}
                       player={player}
                       refreshTrigger={statsRefreshTrigger}
+                      isAdmin={isAdmin}
                     />
                   ))}
               </div>
@@ -1398,9 +1399,10 @@ export default function TournamentViewPage({
 interface PlayerCardProps {
   player: TournamentPlayer;
   refreshTrigger?: number; // Used to trigger stats refresh
+  isAdmin?: boolean;
 }
 
-function PlayerCard({ player, refreshTrigger }: PlayerCardProps) {
+function PlayerCard({ player, refreshTrigger, isAdmin }: PlayerCardProps) {
   const [stats, setStats] = useState<PlayerStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -1457,15 +1459,17 @@ function PlayerCard({ player, refreshTrigger }: PlayerCardProps) {
         </h3>
 
         {/* Status */}
-        <div
-          className={`text-xs px-2 py-0.5 rounded ${
-            player.user.claimed
-              ? "bg-green-900/20 text-green-400"
-              : "bg-orange-900/20 text-orange-400"
-          }`}
-        >
-          {player.user.claimed ? "Claimed" : "Unclaimed"}
-        </div>
+        {isAdmin && (
+          <div
+            className={`text-xs px-2 py-0.5 rounded ${
+              player.user.claimed
+                ? "bg-green-900/20 text-green-400"
+                : "bg-orange-900/20 text-orange-400"
+            }`}
+          >
+            {player.user.claimed ? "Claimed" : "Unclaimed"}
+          </div>
+        )}
 
         {/* Stats */}
         {loading ? (

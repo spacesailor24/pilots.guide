@@ -166,14 +166,18 @@ export default function Sidebar() {
                 )}
 
                 {/* Active Tournaments Subsection for Tournaments */}
-                {section.section === "TOURNAMENTS" &&
-                  activeTournaments.length > 0 && (
+                {section.section === "TOURNAMENTS" && (
                     <li>
                       <button
-                        onClick={toggleActiveTournaments}
-                        className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide hover:text-gray-300 transition-colors"
+                        onClick={activeTournaments.length > 0 ? toggleActiveTournaments : undefined}
+                        disabled={activeTournaments.length === 0}
+                        className={`flex items-center justify-between w-full px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors ${
+                          activeTournaments.length === 0 
+                            ? "text-gray-600 cursor-not-allowed"
+                            : "text-gray-400 hover:text-gray-300"
+                        }`}
                       >
-                        <span>Active Tournaments</span>
+                        <span>Active Tournaments ({activeTournaments.length})</span>
                         <svg
                           className={`w-4 h-4 transition-transform ${
                             isActiveTournamentsOpen ? "rotate-90" : ""
@@ -191,7 +195,7 @@ export default function Sidebar() {
                         </svg>
                       </button>
 
-                      {isActiveTournamentsOpen && (
+                      {isActiveTournamentsOpen && activeTournaments.length > 0 && (
                         <ul className="space-y-1 ml-4">
                           {activeTournaments.map((tournament) => {
                             const tournamentPath = `/tournaments/${tournament.id}`;
@@ -220,7 +224,7 @@ export default function Sidebar() {
                         </ul>
                       )}
                     </li>
-                  )}
+                )}
 
                 {/* Render remaining items (or all items for non-Tournaments sections) */}
                 {section.section === "TOURNAMENTS"

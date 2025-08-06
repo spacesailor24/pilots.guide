@@ -35,6 +35,8 @@ interface RankingsResponse {
 export default function RankingsPage() {
   const { data: session } = useSession();
   const [rankings, setRankings] = useState<RankingsResponse | null>(null);
+  
+  const isAdmin = (session?.user as { isAdmin?: boolean })?.isAdmin;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [minGames, setMinGames] = useState(0);
@@ -218,13 +220,15 @@ export default function RankingsPage() {
                     )}
                     <div>
                       <h3 className="font-medium text-white">{player.displayName}</h3>
-                      <div className={`text-xs px-2 py-1 rounded ${
-                        player.claimed 
-                          ? "bg-green-900/20 text-green-400"
-                          : "bg-orange-900/20 text-orange-400"
-                      }`}>
-                        {player.claimed ? "Claimed" : "Unclaimed"}
-                      </div>
+                      {isAdmin && (
+                        <div className={`text-xs px-2 py-1 rounded ${
+                          player.claimed 
+                            ? "bg-green-900/20 text-green-400"
+                            : "bg-orange-900/20 text-orange-400"
+                        }`}>
+                          {player.claimed ? "Claimed" : "Unclaimed"}
+                        </div>
+                      )}
                     </div>
                   </div>
 
