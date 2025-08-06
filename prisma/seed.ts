@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { updateRatingsAfterMatch } from "../src/lib/matchmaking";
 
 const prisma = new PrismaClient();
 
@@ -239,6 +240,71 @@ const builds = [
 async function main() {
   console.log("🌱 Seeding database...");
 
+  // Create permissions
+  const adminPermission = await prisma.permission.upsert({
+    where: { name: "ADMIN" },
+    update: {},
+    create: {
+      name: "ADMIN",
+      description: "Allows access to admin features",
+    },
+  });
+  console.log("✅ Created permission: ADMIN");
+
+  // Active players list
+  const players = [
+    "bjax",
+    "MrOldMaan",
+    "ChicagoTed",
+    "spacesai1or",
+    "Cypher-1",
+    "Lobus",
+    "Apau11o",
+    "PelicanHazard",
+    "WinRAR42",
+    "Zwoid",
+    "Zero0721",
+    "IntruderThree",
+    "AltFour_Industries",
+    "Mandoolk",
+    "LaoPak",
+    "SIGNCUTTER",
+    "Nanolis",
+    "Captain Maddog",
+    "HarryComa",
+    "Bloodangel92",
+    "TangibleRaptor"
+  ];
+
+  // Create all players as unclaimed users
+  for (const playerName of players) {
+    await prisma.user.create({
+      data: {
+        username: null, // Will be filled when they sign in with Discord
+        displayName: playerName, // The name we show in the app
+        claimed: false,
+        image: null,
+      },
+    });
+    console.log(`✅ Created unclaimed user: ${playerName}`);
+  }
+
+  // Find spacesai1or user and grant admin permission
+  const spacesailorUser = await prisma.user.findFirst({
+    where: { displayName: "spacesai1or" }
+  });
+
+  if (spacesailorUser) {
+    await prisma.userPermission.create({
+      data: {
+        userId: spacesailorUser.id,
+        permissionId: adminPermission.id,
+        grantedBy: "system",
+      },
+    });
+    console.log("✅ Granted ADMIN permission to spacesai1or");
+  }
+
   // Create categories
   for (const category of categories) {
     await prisma.category.upsert({
@@ -297,6 +363,310 @@ async function main() {
     } else {
       console.log(`❌ Failed to create build: ${buildData.buildName} (missing ship, category, or patch)`);
     }
+  }
+
+  // Create sample tournaments
+  const currentTime = new Date();
+  const oneHourAgo = new Date(currentTime.getTime() - 60 * 60 * 1000);
+  const threeDaysFromNow = new Date(currentTime.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+  // Get some players for tournaments
+  const tournamentPlayers = await prisma.user.findMany({
+    where: {
+      displayName: {
+        in: ["spacesai1or", "bjax", "MrOldMaan", "ChicagoTed", "Cypher-1", "Lobus"]
+      }
+    },
+    take: 6
+  });
+
+  if (tournamentPlayers.length >= 4) {
+    // Find spacesai1or to be the tournament creator
+    const spacesailorUser = tournamentPlayers.find(p => p.displayName === "spacesai1or") || tournamentPlayers[0];
+
+    // Create an active tournament without pre-generated matches
+    // const activeTournament = await prisma.tournament.create({
+    //   data: {
+    //     name: "Winter Championship 2025",
+    //     startTime: oneHourAgo,
+    //     endTime: threeDaysFromNow,
+    //     finalized: false,
+    //     createdBy: spacesailorUser.id,
+    //     players: {
+    //       create: tournamentPlayers.map(player => ({
+    //         userId: player.id,
+    //       })),
+    //     },
+    //     // Matches will be generated dynamically using the API
+    //   },
+    // });
+
+    // console.log("✅ Created tournament:", activeTournament.name);
+
+    // Create Legacy Matches tournament from historical data
+    const legacyMatches = [
+      { "winner": "TheChiropractor", "loser": "TangibleRaptor" },
+      { "winner": "MrOldMaan", "loser": "AltFour_Industries" },
+      { "winner": "ChicagoTed", "loser": "Apau11o" },
+      { "winner": "spacesai1or", "loser": "Zero0721" },
+      { "winner": "bjax", "loser": "HarryComa" },
+      { "winner": "WinRAR42", "loser": "Savaulis" },
+      { "winner": "TheChiropractor", "loser": "MrOldMaan" },
+      { "winner": "spacesai1or", "loser": "ChicagoTed" },
+      { "winner": "bjax", "loser": "WinRAR42" },
+      { "winner": "Mandoolk", "loser": "TangibleRaptor" },
+      { "winner": "Apau11o", "loser": "AltFour_Industries" },
+      { "winner": "Zero0721", "loser": "HarryComa" },
+      { "winner": "spacesai1or", "loser": "TheChiropractor" },
+      { "winner": "bjax", "loser": "Mandoolk" },
+      { "winner": "ChicagoTed", "loser": "MrOldMaan" },
+      { "winner": "WinRAR42", "loser": "Zero0721" },
+      { "winner": "Apau11o", "loser": "Savaulis" },
+      { "winner": "AltFour_Industries", "loser": "TangibleRaptor" },
+      { "winner": "bjax", "loser": "spacesai1or" },
+      { "winner": "ChicagoTed", "loser": "TheChiropractor" },
+      { "winner": "Apau11o", "loser": "WinRAR42" },
+      { "winner": "MrOldMaan", "loser": "Mandoolk" },
+      { "winner": "Zero0721", "loser": "AltFour_Industries" },
+      { "winner": "Savaulis", "loser": "HarryComa" },
+      { "winner": "bjax", "loser": "spacesai1or" },
+      { "winner": "ChicagoTed", "loser": "TheChiropractor" },
+      { "winner": "MrOldMaan", "loser": "WinRAR42" },
+      { "winner": "Savaulis", "loser": "TangibleRaptor" },
+      { "winner": "LaoPak", "loser": "Zwoid" },
+      { "winner": "Cypher-1", "loser": "PelicanHazard" },
+      { "winner": "bjax", "loser": "ChicagoTed" },
+      { "winner": "MrOldMaan", "loser": "Savaulis" },
+      { "winner": "Cypher-1", "loser": "LaoPak" },
+      { "winner": "spacesai1or", "loser": "TheChiropractor" },
+      { "winner": "WinRAR42", "loser": "TangibleRaptor" },
+      { "winner": "Zwoid", "loser": "PelicanHazard" },
+      { "winner": "bjax", "loser": "MrOldMaan" },
+      { "winner": "spacesai1or", "loser": "Cypher-1" },
+      { "winner": "ChicagoTed", "loser": "LaoPak" },
+      { "winner": "WinRAR42", "loser": "Savaulis" },
+      { "winner": "TheChiropractor", "loser": "Zwoid" },
+      { "winner": "PelicanHazard", "loser": "TangibleRaptor" },
+      { "winner": "bjax", "loser": "WinRAR42" },
+      { "winner": "MrOldMaan", "loser": "spacesai1or" },
+      { "winner": "ChicagoTed", "loser": "Cypher-1" },
+      { "winner": "TheChiropractor", "loser": "LaoPak" },
+      { "winner": "PelicanHazard", "loser": "Savaulis" },
+      { "winner": "Zwoid", "loser": "TangibleRaptor" },
+      { "winner": "bjax", "loser": "spacesai1or" },
+      { "winner": "Cypher-1", "loser": "MrOldMaan" },
+      { "winner": "PelicanHazard", "loser": "SIGNCUTTER" },
+      { "winner": "Zwoid", "loser": "Captain Maddog" },
+      { "winner": "ComradeBunji", "loser": "IntruderThree" },
+      { "winner": "Lobus", "loser": "Bloodangel92" },
+      { "winner": "AltFour_Industries", "loser": "TangibleRaptor" },
+      { "winner": "bjax", "loser": "Cypher-1" },
+      { "winner": "PelicanHazard", "loser": "Zwoid" },
+      { "winner": "Lobus", "loser": "ComradeBunji" },
+      { "winner": "MrOldMaan", "loser": "SIGNCUTTER" },
+      { "winner": "IntruderThree", "loser": "Captain Maddog" },
+      { "winner": "TangibleRaptor", "loser": "Bloodangel92" },
+      { "winner": "bjax", "loser": "PelicanHazard" },
+      { "winner": "Lobus", "loser": "AltFour_Industries" },
+      { "winner": "Cypher-1", "loser": "ComradeBunji" },
+      { "winner": "Zwoid", "loser": "TangibleRaptor" },
+      { "winner": "MrOldMaan", "loser": "IntruderThree" },
+      { "winner": "spacesai1or", "loser": "SIGNCUTTER" },
+      { "winner": "Captain Maddog", "loser": "Bloodangel92" },
+      { "winner": "bjax", "loser": "Lobus" },
+      { "winner": "Cypher-1", "loser": "PelicanHazard" },
+      { "winner": "MrOldMaan", "loser": "Zwoid" },
+      { "winner": "spacesai1or", "loser": "ComradeBunji" },
+      { "winner": "AltFour_Industries", "loser": "Captain Maddog" },
+      { "winner": "IntruderThree", "loser": "TangibleRaptor" },
+      { "winner": "SIGNCUTTER", "loser": "Bloodangel92" }
+    ];
+
+    // Get all unique players from legacy matches
+    const legacyPlayerNames = Array.from(new Set([
+      ...legacyMatches.map(m => m.winner),
+      ...legacyMatches.map(m => m.loser)
+    ]));
+
+    console.log(`Found ${legacyPlayerNames.length} unique players in legacy matches`);
+
+    // Get existing players from database
+    const existingPlayers = await prisma.user.findMany({
+      where: {
+        displayName: {
+          in: legacyPlayerNames
+        }
+      }
+    });
+
+    // Find players that don't exist yet
+    const existingPlayerNames = existingPlayers.map(p => p.displayName);
+    const missingPlayerNames = legacyPlayerNames.filter(name => !existingPlayerNames.includes(name));
+
+    console.log(`Found ${missingPlayerNames.length} players to create:`, missingPlayerNames);
+
+    // Create missing players
+    for (const playerName of missingPlayerNames) {
+      await prisma.user.create({
+        data: {
+          username: null, // Will be filled when they sign in with Discord
+          displayName: playerName,
+          claimed: false,
+          image: null,
+        },
+      });
+      console.log(`✅ Created unclaimed user: ${playerName}`);
+    }
+
+    // Now get all players for legacy matches (existing + newly created)
+    const legacyPlayers = await prisma.user.findMany({
+      where: {
+        displayName: {
+          in: legacyPlayerNames
+        }
+      }
+    });
+
+    // Create legacy tournament
+    const legacyTournament = await prisma.tournament.create({
+      data: {
+        name: "Legacy Matches",
+        startTime: new Date(currentTime.getTime() - 365 * 24 * 60 * 60 * 1000), // 1 year ago
+        endTime: new Date(currentTime.getTime() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+        finalized: true,
+        createdBy: spacesailorUser.id,
+        players: {
+          create: legacyPlayers.map(player => ({
+            userId: player.id,
+          })),
+        },
+      },
+    });
+
+    // Create matches from legacy data
+    let matchNumber = 1;
+
+    for (const legacyMatch of legacyMatches) {
+      const winnerPlayer = legacyPlayers.find(p => p.displayName === legacyMatch.winner);
+      const loserPlayer = legacyPlayers.find(p => p.displayName === legacyMatch.loser);
+
+      if (winnerPlayer && loserPlayer) {
+        const matchStartTime = new Date(currentTime.getTime() - 365 * 24 * 60 * 60 * 1000 + (matchNumber - 1) * 60 * 60 * 1000 * 2); // 2 hours apart
+        const matchEndTime = new Date(matchStartTime.getTime() + 30 * 60 * 1000); // 30 minutes duration
+
+        // Create match
+        const createdMatch = await prisma.match.create({
+          data: {
+            tournamentId: legacyTournament.id,
+            name: `Legacy Match ${matchNumber}`,
+            generationRound: Math.ceil(matchNumber / 10), // Group every 10 matches into a round
+            startTime: matchStartTime,
+            endTime: matchEndTime,
+          },
+        });
+
+        // Create teams
+        const winnerTeam = await prisma.matchTeam.create({
+          data: {
+            matchId: createdMatch.id,
+            name: "Team A",
+            placement: 1, // Winner
+          },
+        });
+
+        const loserTeam = await prisma.matchTeam.create({
+          data: {
+            matchId: createdMatch.id,
+            name: "Team B",
+            placement: 2, // Loser
+          },
+        });
+
+        // Create participants
+        await prisma.matchParticipant.create({
+          data: {
+            teamId: winnerTeam.id,
+            userId: winnerPlayer.id,
+          },
+        });
+
+        await prisma.matchParticipant.create({
+          data: {
+            teamId: loserTeam.id,
+            userId: loserPlayer.id,
+          },
+        });
+
+        // Create round
+        await prisma.round.create({
+          data: {
+            matchId: createdMatch.id,
+            roundNumber: 1,
+            startTime: matchStartTime,
+            endTime: matchEndTime,
+            winnerId: winnerPlayer.id,
+          },
+        });
+
+        matchNumber++;
+      }
+    }
+
+    console.log("✅ Created tournament:", legacyTournament.name, `with ${legacyMatches.length} matches`);
+
+    // Initialize player ratings using the same OpenSkill system as the API
+    console.log("📊 Initializing player ratings from legacy matches using OpenSkill...");
+
+    // Create default ratings for all players who participated in legacy matches
+    const { rating } = await import('openskill');
+
+    for (const player of legacyPlayers) {
+      const defaultRating = rating();
+      const existingRating = await prisma.playerRating.findUnique({
+        where: { userId: player.id }
+      });
+
+      if (!existingRating) {
+        await prisma.playerRating.create({
+          data: {
+            userId: player.id,
+            mu: defaultRating.mu,
+            sigma: defaultRating.sigma,
+            gamesPlayed: 0
+          }
+        });
+      }
+    }
+
+    // Process all legacy matches through the rating system
+    const allMatches = await prisma.match.findMany({
+      where: { tournamentId: legacyTournament.id },
+      include: {
+        teams: {
+          include: {
+            players: true
+          }
+        }
+      },
+      orderBy: { name: 'asc' }
+    });
+
+    for (const match of allMatches) {
+      // Convert match data to the format expected by updateRatingsAfterMatch
+      const teamResults = match.teams.map(team => ({
+        playerIds: team.players.map(p => p.userId),
+        placement: team.placement || 2
+      }));
+
+      // Update ratings using the same system as live matches
+      await updateRatingsAfterMatch({
+        tournamentId: legacyTournament.id,
+        matchId: match.id,
+        teamResults
+      });
+    }
+
+    console.log("📊 Player ratings initialized using OpenSkill rating system!");
   }
 
   console.log("🎉 Seeding completed!");

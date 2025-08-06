@@ -42,14 +42,22 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  builds        Build[]
+  id                  String              @id @default(cuid())
+  username            String?             @unique // Discord username
+  email               String?             @unique // Required by NextAuth PrismaAdapter
+  emailVerified       DateTime?           // Required by NextAuth PrismaAdapter
+  displayName         String?             // Name shown in app (e.g., "bjax", "MrOldMaan")
+  image               String?
+  claimed             Boolean             @default(false) // Track if user account is claimed
+  accounts            Account[]
+  sessions            Session[]
+  builds              Build[]
+  permissions         UserPermission[]
+  createdTournaments  Tournament[]        // Tournaments this user created
+  tournamentPlayers   TournamentPlayer[]  // Tournament participations
+  roundWins           Round[]             // Rounds this user won
+  playerRating        PlayerRating?       // Rating for matchmaking
+  matchParticipations MatchParticipant[]  // Match participations
 }
 
 model VerificationToken {
@@ -116,4 +124,134 @@ model Build {
   @@index([userId])
   @@index([categoryId])
   @@index([patchId])
+}
+
+// Permissions system
+model Permission {
+  id          String           @id @default(cuid())
+  name        String           @unique // e.g., "MATCHMAKING_VIEW", "ADMIN", "MODERATOR"
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  users       UserPermission[]
+}
+
+model UserPermission {
+  id           String     @id @default(cuid())
+  userId       String
+  permissionId String
+  grantedAt    DateTime   @default(now())
+  grantedBy    String?    // Optional: track who granted the permission
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permissionId])
+  @@index([userId])
+  @@index([permissionId])
+}
+
+// Tournament system
+model Tournament {
+  id          String            @id @default(cuid())
+  name        String
+  startTime   DateTime
+  endTime     DateTime?        // Scheduled end time (restricts new match generation)
+  finalized   Boolean          @default(false) // Whether tournament has been finalized
+  createdBy   String
+  creator     User             @relation(fields: [createdBy], references: [id])
+  players     TournamentPlayer[]
+  matches     Match[]          // Multiple matches per tournament
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([createdBy])
+  @@index([startTime])
+}
+
+model TournamentPlayer {
+  id           String     @id @default(cuid())
+  tournamentId String
+  userId       String
+  active       Boolean    @default(true) // Whether player is currently active in tournament
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id])
+
+  @@unique([tournamentId, userId])
+  @@index([tournamentId])
+  @@index([userId])
+}
+
+// Individual matches within a tournament
+model Match {
+  id              String     @id @default(cuid())
+  tournamentId    String
+  name            String     // e.g., "Semifinals Match 1", "Final"
+  generationRound Int        @default(1) // Which generation/round this match belongs to
+  startTime       DateTime
+  endTime         DateTime?
+  tournament      Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  rounds          Round[]    // Multiple rounds per match
+  teams           MatchTeam[] // Teams participating in this match
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([tournamentId])
+  @@index([startTime])
+  @@index([tournamentId, generationRound])
+}
+
+model MatchTeam {
+  id       String            @id @default(cuid())
+  matchId  String
+  name     String            // e.g., "Team A", "Team B"
+  match    Match             @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  players  MatchParticipant[] // Players in this team
+  placement Int?             // Final placement (1st, 2nd, etc.) - null if match not completed
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  @@index([matchId])
+}
+
+model MatchParticipant {
+  id       String    @id @default(cuid())
+  teamId   String
+  userId   String
+  team     MatchTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+}
+
+// Individual rounds within a match
+model Round {
+  id        String   @id @default(cuid())
+  matchId   String
+  roundNumber Int    // Round 1, 2, 3, etc.
+  startTime DateTime
+  endTime   DateTime?
+  winnerId  String?  // Optional winner of this round
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  winner    User?    @relation(fields: [winnerId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([matchId, roundNumber])
+  @@index([matchId])
+  @@index([winnerId])
+}
+
+// Player rating system for matchmaking
+model PlayerRating {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  mu          Float    @default(25.0)    // Skill mean (OpenSkill default)
+  sigma       Float    @default(8.333)   // Skill uncertainty (OpenSkill default)
+  gamesPlayed Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
